@@ -1,0 +1,22 @@
+{
+  "description": "Response when getting a specific position by symbol",
+  "timestamp": "2025-10-25T10:42:06.000000+08:00",
+  "data": {
+    "asset_id": "b0b6dd9d-8b9b-48a9-ba46-b9d54906e415",
+    "symbol": "AAPL",
+    "exchange": "NASDAQ",
+    "asset_class": "us_equity",
+    "avg_entry_price": "125.15",
+    "qty": "1",
+    "side": "long",
+    "market_value": "126.50",
+    "cost_basis": "125.15",
+    "unrealized_pl": "1.35",
+    "unrealized_plpc": "0.0107866",
+    "unrealized_intraday_pl": "1.35",
+    "unrealized_intraday_plpc": "0.0107866",
+    "current_price": "126.50",
+    "lastday_price": "124.00",
+    "change_today": "0.0201613"
+  }
+}
