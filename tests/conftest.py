@@ -99,3 +99,216 @@ def sample_order_execution():
         "qty": 10,
         "limit_price": 150.00
     }
+
+
+# ============================================================================
+# Mock Alpaca API Fixtures
+# ============================================================================
+
+class MockAlpacaOrder:
+    """Mock Alpaca Order object"""
+    def __init__(self, id, client_order_id, symbol, qty, side, order_type,
+                 time_in_force, limit_price=None, filled_avg_price=None,
+                 status='pending', filled_qty=0):
+        self.id = id
+        self.client_order_id = client_order_id
+        self.symbol = symbol
+        self.qty = str(qty)  # Alpaca returns as string
+        self.side = side
+        self.order_type = order_type
+        self.time_in_force = time_in_force
+        self.limit_price = limit_price
+        self.filled_avg_price = filled_avg_price
+        self.status = status
+        self.filled_qty = str(filled_qty)
+        self.created_at = "2025-10-26T09:45:00Z"
+        self.updated_at = "2025-10-26T09:45:00Z"
+
+
+class MockAlpacaPosition:
+    """Mock Alpaca Position object"""
+    def __init__(self, symbol, qty, side, avg_entry_price, current_price,
+                 market_value, unrealized_pl, unrealized_plpc):
+        self.symbol = symbol
+        self.qty = str(qty)
+        self.side = side
+        self.avg_entry_price = str(avg_entry_price)
+        self.current_price = str(current_price)
+        self.market_value = str(market_value)
+        self.unrealized_pl = str(unrealized_pl)
+        self.unrealized_plpc = str(unrealized_plpc)
+
+
+class MockAlpacaBar:
+    """Mock Alpaca Bar (market data)"""
+    def __init__(self, symbol, close, high, low, open, volume):
+        self.symbol = symbol
+        self.close = close
+        self.high = high
+        self.low = low
+        self.open = open
+        self.volume = volume
+
+
+class MockAlpacaClient:
+    """Mock Alpaca Trading Client for testing"""
+    def __init__(self):
+        self.orders = {}
+        self.positions = {}
+        self.next_order_id = 1
+
+    def submit_order(self, order_request):
+        """Mock submit_order"""
+        order_id = f"test-order-{self.next_order_id}"
+        self.next_order_id += 1
+
+        order = MockAlpacaOrder(
+            id=order_id,
+            client_order_id=f"client-{order_id}",
+            symbol=order_request.symbol,
+            qty=order_request.qty,
+            side=order_request.side.value,
+            order_type=order_request.order_type.value if hasattr(order_request, 'order_type') else 'limit',
+            time_in_force=order_request.time_in_force.value,
+            limit_price=getattr(order_request, 'limit_price', None),
+            status='pending'
+        )
+
+        self.orders[order_id] = order
+        return order
+
+    def get_order_by_id(self, order_id):
+        """Mock get_order_by_id"""
+        if order_id not in self.orders:
+            raise Exception(f"Order {order_id} not found")
+        return self.orders[order_id]
+
+    def get_orders(self, filter=None):
+        """Mock get_orders"""
+        return list(self.orders.values())
+
+    def cancel_order_by_id(self, order_id):
+        """Mock cancel_order_by_id"""
+        if order_id not in self.orders:
+            raise Exception(f"Order {order_id} not found")
+        self.orders[order_id].status = 'cancelled'
+        return True
+
+    def get_all_positions(self):
+        """Mock get_all_positions"""
+        return list(self.positions.values())
+
+    def get_open_position(self, symbol):
+        """Mock get_open_position"""
+        if symbol not in self.positions:
+            raise Exception(f"Position {symbol} not found")
+        return self.positions[symbol]
+
+    def close_position(self, symbol):
+        """Mock close_position"""
+        if symbol in self.positions:
+            del self.positions[symbol]
+        return True
+
+
+@pytest.fixture
+def mock_alpaca_client():
+    """Provide a mock Alpaca client for testing"""
+    return MockAlpacaClient()
+
+
+@pytest.fixture
+def mock_pending_order():
+    """Mock pending order"""
+    return MockAlpacaOrder(
+        id="test-order-pending",
+        client_order_id="client-pending",
+        symbol="AAPL",
+        qty=10,
+        side="buy",
+        order_type="limit",
+        time_in_force="day",
+        limit_price=150.00,
+        status="pending"
+    )
+
+
+@pytest.fixture
+def mock_filled_order():
+    """Mock filled order"""
+    return MockAlpacaOrder(
+        id="test-order-filled",
+        client_order_id="client-filled",
+        symbol="AAPL",
+        qty=10,
+        side="buy",
+        order_type="limit",
+        time_in_force="day",
+        limit_price=150.00,
+        filled_avg_price=150.25,
+        status="filled",
+        filled_qty=10
+    )
+
+
+@pytest.fixture
+def mock_cancelled_order():
+    """Mock cancelled order"""
+    return MockAlpacaOrder(
+        id="test-order-cancelled",
+        client_order_id="client-cancelled",
+        symbol="AAPL",
+        qty=10,
+        side="buy",
+        order_type="limit",
+        time_in_force="day",
+        limit_price=150.00,
+        status="cancelled"
+    )
+
+
+@pytest.fixture
+def mock_position():
+    """Mock Alpaca position"""
+    return MockAlpacaPosition(
+        symbol="AAPL",
+        qty=10,
+        side="long",
+        avg_entry_price=150.25,
+        current_price=155.00,
+        market_value=1550.00,
+        unrealized_pl=47.50,
+        unrealized_plpc=0.0316
+    )
+
+
+class MockAlpacaQuote:
+    """Mock Alpaca Quote for market data"""
+    def __init__(self, symbol, bid_price, ask_price):
+        self.symbol = symbol
+        self.bid_price = bid_price
+        self.ask_price = ask_price
+
+
+class MockAlpacaDataClient:
+    """Mock Alpaca Data Client for market data"""
+    def __init__(self):
+        self.quotes = {}
+
+    def get_stock_latest_quote(self, request):
+        """Mock get_stock_latest_quote"""
+        symbol = request.symbol_or_symbols
+        if symbol in self.quotes:
+            return {symbol: self.quotes[symbol]}
+        # Default quote
+        return {symbol: MockAlpacaQuote(symbol, 100.0, 100.5)}
+
+    def add_quote(self, symbol, bid_price, ask_price):
+        """Helper to add quotes for testing"""
+        self.quotes[symbol] = MockAlpacaQuote(symbol, bid_price, ask_price)
+
+
+@pytest.fixture
+def mock_data_client():
+    """Provide a mock Alpaca data client for testing"""
+    return MockAlpacaDataClient()
