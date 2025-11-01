@@ -36,7 +36,7 @@ class TestOrderExecutorNewTrade:
         assert len(mock_alpaca_client.orders) == 1
         order = list(mock_alpaca_client.orders.values())[0]
         assert order.symbol == 'AAPL'
-        assert order.qty == '10'
+        assert float(order.qty) == 10.0
         assert order.side == 'buy'
         assert order.limit_price == 150.00
 
@@ -95,7 +95,7 @@ class TestOrderExecutorNewTrade:
         order = list(mock_alpaca_client.orders.values())[0]
         assert order.symbol == 'TSLA'
         assert order.side == 'sell'
-        assert order.qty == '5'
+        assert float(order.qty) == 5.0
 
     def test_new_trade_missing_required_fields(self, test_db, mock_alpaca_client):
         """Test NEW_TRADE with missing required fields"""
@@ -373,7 +373,7 @@ class TestOrderExecutorAmend:
         new_orders = [o for o in mock_alpaca_client.orders.values() if o.id != original_order_id]
         assert len(new_orders) == 1
         new_order = new_orders[0]
-        assert new_order.qty == '15'
+        assert float(new_order.qty) == 15.0
         assert new_order.limit_price == 155.00
 
         # Verify AMEND decision was marked as executed

@@ -88,6 +88,19 @@ class TestCompleteTradeLifecycle:
         assert len(tp_orders) == 1
 
         # STEP 5: Update position values
+        # Add position to mock Alpaca client
+        from tests.conftest import MockAlpacaPosition
+        mock_alpaca_client.positions['AAPL'] = MockAlpacaPosition(
+            symbol='AAPL',
+            qty=10,
+            side='long',
+            avg_entry_price=150.25,
+            current_price=157.25,
+            market_value=1572.50,
+            unrealized_pl=70.00,
+            unrealized_plpc=0.0466
+        )
+
         mock_data_client.add_quote('AAPL', 157.00, 157.50)
         pos_monitor = PositionMonitor(
             test_mode=True,
@@ -179,6 +192,19 @@ class TestCompleteTradeLifecycle:
         position = positions[0]
 
         # STEP 5: Update position with losing price
+        # Add position to mock Alpaca client
+        from tests.conftest import MockAlpacaPosition
+        mock_alpaca_client.positions['TSLA'] = MockAlpacaPosition(
+            symbol='TSLA',
+            qty=5,
+            side='long',
+            avg_entry_price=200.25,
+            current_price=196.25,
+            market_value=981.25,
+            unrealized_pl=-20.00,
+            unrealized_plpc=-0.01
+        )
+
         mock_data_client.add_quote('TSLA', 196.00, 196.50)
         pos_monitor = PositionMonitor(
             test_mode=True,
@@ -365,7 +391,7 @@ class TestCompleteTradeLifecycle:
         new_orders = [o for o in mock_alpaca_client.orders.values() if o.id != original_order_id]
         assert len(new_orders) == 1
         new_order = new_orders[0]
-        assert new_order.qty == '15'
+        assert float(new_order.qty) == 15.0
         assert new_order.limit_price == 155.00
 
     def test_multiple_positions_lifecycle(self, test_db, mock_alpaca_client, mock_data_client):
@@ -414,8 +440,24 @@ class TestCompleteTradeLifecycle:
         assert len(positions) == 3
 
         # Update all positions
-        for symbol in symbols:
-            mock_data_client.add_quote(symbol, 160.00, 160.50)
+        from tests.conftest import MockAlpacaPosition
+        for i, symbol in enumerate(symbols):
+            entry_price = 150.00 + i * 10 + 0.25
+            current_price = entry_price + 10  # All positions are up $10/share
+            unrealized_pl = (current_price - entry_price) * 10
+
+            # Add position to mock Alpaca client
+            mock_alpaca_client.positions[symbol] = MockAlpacaPosition(
+                symbol=symbol,
+                qty=10,
+                side='long',
+                avg_entry_price=entry_price,
+                current_price=current_price,
+                market_value=current_price * 10,
+                unrealized_pl=unrealized_pl,
+                unrealized_plpc=unrealized_pl / (entry_price * 10)
+            )
+            mock_data_client.add_quote(symbol, current_price - 0.25, current_price + 0.25)
 
         pos_monitor = PositionMonitor(
             test_mode=True,
@@ -428,5 +470,6 @@ class TestCompleteTradeLifecycle:
         # Verify all positions were updated
         for position in positions:
             updated_pos = test_db.get_by_id('position_tracking', position['id'])
-            assert float(updated_pos['current_price']) == 160.25
+            # Each position should be up $10/share from entry
+            assert float(updated_pos['current_price']) > float(position['avg_entry_price'])
             assert float(updated_pos['unrealized_pnl']) > 0

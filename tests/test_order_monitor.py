@@ -549,7 +549,11 @@ class TestOrderMonitorExitFill:
             'trade_journal_id': trade_id,
             'symbol': 'AAPL',
             'qty': 10,
-            'avg_entry_price': 150.25
+            'avg_entry_price': 150.25,
+            'current_price': 150.25,
+            'market_value': 1502.50,
+            'cost_basis': 1502.50,
+            'unrealized_pnl': 0.00
         })
 
         # Create filled TP order

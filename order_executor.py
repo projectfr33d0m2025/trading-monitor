@@ -141,8 +141,8 @@ class OrderExecutor:
 
             logger.info(f"Order submitted successfully: {order.id}")
 
-            # Create unique trade_id
-            trade_id = f"{symbol}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+            # Create unique trade_id with microseconds to avoid collisions
+            trade_id = f"{symbol}_{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
 
             # Create trade_journal entry
             trade_journal_id = self.db.execute_query("""

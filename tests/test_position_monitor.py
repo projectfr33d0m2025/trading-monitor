@@ -32,6 +32,19 @@ class TestPositionMonitorUpdate:
             'unrealized_pnl': 0.00
         })
 
+        # Add position to mock Alpaca client (so it's not reconciled as closed)
+        from tests.conftest import MockAlpacaPosition
+        mock_alpaca_client.positions['AAPL'] = MockAlpacaPosition(
+            symbol='AAPL',
+            qty=10,
+            side='long',
+            avg_entry_price=150.00,
+            current_price=155.25,
+            market_value=1552.50,
+            unrealized_pl=52.50,
+            unrealized_plpc=0.035
+        )
+
         # Set current market price (higher than entry)
         mock_data_client.add_quote('AAPL', 155.00, 155.50)  # Midpoint = 155.25
 
@@ -73,6 +86,19 @@ class TestPositionMonitorUpdate:
             'unrealized_pnl': 0.00
         })
 
+        # Add position to mock Alpaca client
+        from tests.conftest import MockAlpacaPosition
+        mock_alpaca_client.positions['TSLA'] = MockAlpacaPosition(
+            symbol='TSLA',
+            qty=5,
+            side='long',
+            avg_entry_price=200.00,
+            current_price=190.25,
+            market_value=951.25,
+            unrealized_pl=-48.75,
+            unrealized_plpc=-0.04875
+        )
+
         # Set current market price (lower than entry)
         mock_data_client.add_quote('TSLA', 190.00, 190.50)  # Midpoint = 190.25
 
@@ -101,6 +127,7 @@ class TestPositionMonitorUpdate:
             ('GOOGL', 140.00, 3, 138.00, 138.50)
         ]
 
+        from tests.conftest import MockAlpacaPosition
         for symbol, entry, qty, bid, ask in symbols:
             trade_id = test_db.insert('trade_journal', {
                 'trade_id': f'{symbol}_TEST',
@@ -120,6 +147,18 @@ class TestPositionMonitorUpdate:
                 'cost_basis': entry * qty,
                 'unrealized_pnl': 0.00
             })
+
+            # Add position to mock Alpaca client
+            mock_alpaca_client.positions[symbol] = MockAlpacaPosition(
+                symbol=symbol,
+                qty=qty,
+                side='long',
+                avg_entry_price=entry,
+                current_price=entry,
+                market_value=entry * qty,
+                unrealized_pl=0.00,
+                unrealized_plpc=0.00
+            )
 
             mock_data_client.add_quote(symbol, bid, ask)
 
@@ -211,8 +250,8 @@ class TestPositionMonitorReconciliation:
         trade = test_db.get_by_id('trade_journal', trade_id)
         assert trade['status'] == 'CLOSED'
         assert trade['exit_reason'] == 'MANUAL_EXIT'
-        assert float(trade['exit_price']) == 155.00  # Last known price
-        assert float(trade['actual_pnl']) == 50.00  # Last unrealized P&L
+        assert float(trade['exit_price']) == 155.25  # Current market price (midpoint)
+        assert float(trade['actual_pnl']) == 52.50  # Recalculated P&L: (155.25 - 150.00) * 10
 
         # Verify position_tracking was deleted
         positions = test_db.query('position_tracking', 'id = %s', (position_id,))

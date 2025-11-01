@@ -334,6 +334,7 @@ class TestPositionMonitorErrors:
         mock_trading = MockAlpacaClientWithErrors()
         mock_data = MockDataClientWithErrors()
 
+        from tests.conftest import MockAlpacaPosition
         for symbol in symbols:
             trade_id = test_db.insert('trade_journal', {
                 'trade_id': f'{symbol}_ERROR',
@@ -353,6 +354,18 @@ class TestPositionMonitorErrors:
                 'cost_basis': 1500.00,
                 'unrealized_pnl': 0.00
             })
+
+            # Add position to mock Alpaca client
+            mock_trading.positions[symbol] = MockAlpacaPosition(
+                symbol=symbol,
+                qty=10,
+                side='long',
+                avg_entry_price=150.00,
+                current_price=150.00,
+                market_value=1500.00,
+                unrealized_pl=0.00,
+                unrealized_plpc=0.00
+            )
 
         # Add quotes for valid symbols
         mock_data.add_quote('AAPL', 155.00, 155.50)

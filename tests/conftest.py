@@ -43,7 +43,15 @@ def test_db(postgresql_instance):
 
     yield db
 
-    # Cleanup
+    # Cleanup - truncate all tables to ensure test isolation
+    try:
+        db.execute_query("""
+            TRUNCATE TABLE position_tracking, order_execution, trade_journal, analysis_decision RESTART IDENTITY CASCADE
+        """)
+    except Exception as e:
+        # If truncate fails, it's okay - the connection will be closed anyway
+        pass
+
     db.close()
 
 
@@ -108,8 +116,8 @@ def sample_order_execution():
 class MockAlpacaOrder:
     """Mock Alpaca Order object"""
     def __init__(self, id, client_order_id, symbol, qty, side, order_type,
-                 time_in_force, limit_price=None, filled_avg_price=None,
-                 status='pending', filled_qty=0):
+                 time_in_force, limit_price=None, stop_price=None, filled_avg_price=None,
+                 status='pending', filled_qty=0, filled_at=None):
         self.id = id
         self.client_order_id = client_order_id
         self.symbol = symbol
@@ -118,9 +126,11 @@ class MockAlpacaOrder:
         self.order_type = order_type
         self.time_in_force = time_in_force
         self.limit_price = limit_price
+        self.stop_price = stop_price
         self.filled_avg_price = filled_avg_price
         self.status = status
         self.filled_qty = str(filled_qty)
+        self.filled_at = filled_at
         self.created_at = "2025-10-26T09:45:00Z"
         self.updated_at = "2025-10-26T09:45:00Z"
 
