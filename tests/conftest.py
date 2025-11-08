@@ -6,6 +6,7 @@ import pytest
 import testing.postgresql
 import os
 import sys
+import uuid
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -183,13 +184,14 @@ class MockAlpacaClient:
         self.next_order_id = 1
 
     def submit_order(self, order_request):
-        """Mock submit_order"""
-        order_id = f"test-order-{self.next_order_id}"
+        """Mock submit_order - returns UUID objects like real Alpaca API"""
+        order_id = uuid.uuid4()  # Generate UUID like real Alpaca API
+        client_order_id = uuid.uuid4()
         self.next_order_id += 1
 
         order = MockAlpacaOrder(
             id=order_id,
-            client_order_id=f"client-{order_id}",
+            client_order_id=client_order_id,
             symbol=order_request.symbol,
             qty=order_request.qty,
             side=order_request.side.value,
@@ -199,7 +201,7 @@ class MockAlpacaClient:
             status='pending'
         )
 
-        self.orders[order_id] = order
+        self.orders[str(order_id)] = order  # Use string as dict key
         return order
 
     def get_order_by_id(self, order_id):
@@ -244,10 +246,10 @@ def mock_alpaca_client():
 
 @pytest.fixture
 def mock_pending_order():
-    """Mock pending order"""
+    """Mock pending order - uses UUID objects like real Alpaca API"""
     return MockAlpacaOrder(
-        id="test-order-pending",
-        client_order_id="client-pending",
+        id=uuid.uuid4(),
+        client_order_id=uuid.uuid4(),
         symbol="AAPL",
         qty=10,
         side="buy",
@@ -260,10 +262,10 @@ def mock_pending_order():
 
 @pytest.fixture
 def mock_filled_order():
-    """Mock filled order"""
+    """Mock filled order - uses UUID objects like real Alpaca API"""
     return MockAlpacaOrder(
-        id="test-order-filled",
-        client_order_id="client-filled",
+        id=uuid.uuid4(),
+        client_order_id=uuid.uuid4(),
         symbol="AAPL",
         qty=10,
         side="buy",
@@ -278,10 +280,10 @@ def mock_filled_order():
 
 @pytest.fixture
 def mock_cancelled_order():
-    """Mock cancelled order"""
+    """Mock cancelled order - uses UUID objects like real Alpaca API"""
     return MockAlpacaOrder(
-        id="test-order-cancelled",
-        client_order_id="client-cancelled",
+        id=uuid.uuid4(),
+        client_order_id=uuid.uuid4(),
         symbol="AAPL",
         qty=10,
         side="buy",

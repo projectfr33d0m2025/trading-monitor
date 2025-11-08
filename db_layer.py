@@ -4,11 +4,17 @@ Connects directly to Postgres DB underneath NocoDB
 """
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from psycopg2.extensions import register_adapter, AsIs
 import logging
 import os
+from uuid import UUID
 from config import get_postgres_config
 
 logger = logging.getLogger(__name__)
+
+# Register UUID adapter for psycopg2
+# Alpaca API returns UUID objects which need to be adapted for PostgreSQL
+register_adapter(UUID, lambda val: AsIs(f"'{val}'"))
 
 
 class TradingDB:
