@@ -108,34 +108,47 @@ class OrderExecutor:
         decision_data = decision.get('Decision', {})
         analysis_id = decision['Analysis_Id']
 
+        # Extract from structure: Decision.new_trade
+        new_trade = decision_data.get('new_trade', {})
+
         # Extract trade parameters
-        symbol = decision['Ticker']
-        action = decision_data.get('action', 'BUY')
-        qty = decision_data.get('qty')
-        entry_price = decision_data.get('entry_price')
-        stop_loss = decision_data.get('stop_loss')
-        take_profit = decision_data.get('take_profit')
-        trade_style = decision_data.get('trade_style', 'DAYTRADE')
-        pattern = decision_data.get('pattern', '')
+        symbol = decision_data.get('symbol') or decision['Ticker']  # Fallback to Ticker column
+        side = new_trade.get('side', 'buy')  # buy or sell
+        qty = new_trade.get('qty')
+        limit_price = new_trade.get('limit_price')  # entry price
+
+        # stop_loss and take_profit are now objects
+        stop_loss_obj = new_trade.get('stop_loss', {})
+        stop_price = stop_loss_obj.get('stop_price') if isinstance(stop_loss_obj, dict) else stop_loss_obj
+
+        take_profit_obj = new_trade.get('take_profit')
+        take_profit_price = None
+        if take_profit_obj and isinstance(take_profit_obj, dict):
+            take_profit_price = take_profit_obj.get('limit_price')
+        elif take_profit_obj:
+            take_profit_price = take_profit_obj
+
+        strategy = new_trade.get('strategy', 'SWING')  # SWING or TREND (was trade_style)
+        pattern = new_trade.get('pattern', '')
 
         # Validate required fields
-        if not all([qty, entry_price, stop_loss]):
-            logger.error(f"Missing required fields for {analysis_id}: qty={qty}, entry={entry_price}, sl={stop_loss}")
+        if not all([qty, limit_price, stop_price]):
+            logger.error(f"Missing required fields for {analysis_id}: qty={qty}, limit_price={limit_price}, stop_price={stop_price}")
             return
 
-        logger.info(f"Placing {action} order for {symbol}: qty={qty}, entry=${entry_price}, sl=${stop_loss}, tp=${take_profit}")
+        logger.info(f"Placing {side.upper()} order for {symbol}: qty={qty}, entry=${limit_price}, sl=${stop_price}, tp=${take_profit_price}")
 
         try:
-            # Determine order side
-            side = OrderSide.BUY if action == 'BUY' else OrderSide.SELL
+            # Determine order side from new structure
+            order_side = OrderSide.BUY if side.lower() == 'buy' else OrderSide.SELL
 
             # Submit limit order to Alpaca
             order_request = LimitOrderRequest(
                 symbol=symbol,
                 qty=int(qty),
-                side=side,
+                side=order_side,
                 time_in_force=TimeInForce.DAY,
-                limit_price=float(entry_price)
+                limit_price=float(limit_price)
             )
 
             order = self.alpaca.submit_order(order_request)
@@ -145,7 +158,7 @@ class OrderExecutor:
             # Create unique trade_id with microseconds to avoid collisions
             trade_id = f"{symbol}_{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
 
-            # Create trade_journal entry
+            # Create trade_journal entry (trade_style is now strategy)
             trade_journal_id = self.db.execute_query("""
                 INSERT INTO trade_journal (
                     trade_id, symbol, trade_style, pattern, status,
@@ -156,13 +169,13 @@ class OrderExecutor:
             """, (
                 trade_id,
                 symbol,
-                trade_style,
+                strategy,  # Using strategy from new_trade
                 pattern,
                 'ORDERED',
                 analysis_id,
-                float(entry_price),
-                float(stop_loss),
-                float(take_profit) if take_profit else None,
+                float(limit_price),  # Was entry_price
+                float(stop_price),    # Was stop_loss
+                float(take_profit_price) if take_profit_price else None,
                 int(qty)
             ))[0]['id']
 
@@ -181,11 +194,11 @@ class OrderExecutor:
                 order.id,
                 order.client_order_id,
                 'ENTRY',
-                'buy' if action == 'BUY' else 'sell',
+                side.lower(),  # buy or sell from new_trade
                 'pending',
                 'day',
                 int(qty),
-                float(entry_price)
+                float(limit_price)  # Was entry_price
             ))
 
             logger.info(f"Created order_execution entry for order {order.id}")

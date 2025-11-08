@@ -57,19 +57,34 @@ def test_db(postgresql_instance):
 
 @pytest.fixture
 def sample_analysis_decision():
-    """Sample analysis decision data for testing"""
+    """Sample analysis decision data for testing - NEW JSON STRUCTURE"""
     return {
         "Analysis_Id": "TEST_001",
         "Ticker": "AAPL",
         "Decision": {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 165.0,
             "primary_action": "NEW_TRADE",
-            "qty": 10,
-            "entry_price": 150.00,
-            "stop_loss": 145.00,
-            "take_profit": 160.00,
-            "trade_style": "SWING",
-            "pattern": "Breakout"
+            "new_trade": {
+                "strategy": "SWING",
+                "pattern": "Breakout",
+                "qty": 10,
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 150.00,
+                "stop_loss": {
+                    "stop_price": 145.00
+                },
+                "take_profit": {
+                    "limit_price": 160.00
+                },
+                "reward_risk_ratio": 2.0,
+                "risk_amount": 50.00,
+                "risk_percentage": 1.0
+            }
         },
         "executed": False,
         "Approve": True

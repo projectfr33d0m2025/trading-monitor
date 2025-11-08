@@ -52,16 +52,113 @@ Develop a Python-based trading system monitoring solution that tracks the comple
 | **execution_time** | TIMESTAMP | NULL | **When executed** |
 
 **Decision JSON Structure** (stored in `Decision` column):
+
+**PRIMARY_ACTION VALUES**: "NEW_TRADE" | "AMEND" | "CANCEL" | "NO_ACTION"
+
+**NEW_TRADE - Swing Trade Example:**
 ```json
 {
-  "action": "BUY" | "SELL" | "HOLD",
-  "primary_action": "NEW_TRADE" | "CANCEL" | "AMEND" | "NO_ACTION",
-  "qty": 10,
-  "entry_price": 150.00,
-  "stop_loss": 145.00,
-  "take_profit": 160.00,
-  "trade_style": "DAYTRADE" | "SWING",
-  "pattern": "Breakout"
+    "symbol": "NVDA",
+    "analysis_date": "2025-01-15",
+    "support": 100.1,
+    "resistance": 150.1,
+    "primary_action": "NEW_TRADE",
+    "new_trade": {
+        "strategy": "SWING",
+        "pattern": "PATTERN_1",
+        "qty": 45,
+        "side": "buy",
+        "type": "limit",
+        "time_in_force": "day",
+        "limit_price": 133.80,
+        "stop_loss": {
+            "stop_price": 124.00
+        },
+        "take_profit": {
+            "limit_price": 145.50
+        },
+        "reward_risk_ratio": 2.15,
+        "risk_amount": 100.00,
+        "risk_percentage": 1.0
+    }
+}
+```
+
+**NEW_TRADE - Trend Trade Example:**
+```json
+{
+    "symbol": "AAPL",
+    "analysis_date": "2025-01-15",
+    "support": 100.1,
+    "resistance": 150.1,
+    "primary_action": "NEW_TRADE",
+    "new_trade": {
+        "strategy": "TREND",
+        "pattern": "PATTERN_3",
+        "qty": 30,
+        "side": "buy",
+        "type": "limit",
+        "time_in_force": "day",
+        "limit_price": 225.50,
+        "stop_loss": {
+            "stop_price": 218.00
+        },
+        "reward_risk_ratio": 3.5,
+        "risk_amount": 100.00,
+        "risk_percentage": 1.0
+    }
+}
+```
+Note: TREND trades do not include take_profit.
+
+**AMEND Example:**
+```json
+{
+    "symbol": "NVDA",
+    "analysis_date": "2025-01-15",
+    "support": 100.1,
+    "resistance": 150.1,
+    "primary_action": "AMEND",
+    "new_trade": {
+        "strategy": "SWING",
+        "pattern": "PATTERN_1",
+        "qty": 45,
+        "side": "buy",
+        "type": "limit",
+        "time_in_force": "day",
+        "limit_price": 133.80,
+        "stop_loss": {
+            "stop_price": 124.00
+        },
+        "take_profit": {
+            "limit_price": 145.50
+        },
+        "reward_risk_ratio": 2.15,
+        "risk_amount": 100.00,
+        "risk_percentage": 1.0
+    }
+}
+```
+
+**CANCEL Example:**
+```json
+{
+    "symbol": "NVDA",
+    "analysis_date": "2025-01-15",
+    "support": 100.1,
+    "resistance": 150.1,
+    "primary_action": "CANCEL"
+}
+```
+
+**NO_ACTION Example:**
+```json
+{
+    "symbol": "AMD",
+    "analysis_date": "2025-01-15",
+    "support": 100.1,
+    "resistance": 150.1,
+    "primary_action": "NO_ACTION"
 }
 ```
 

@@ -69,14 +69,28 @@ class TestOrderExecutorNewTrade:
 
     def test_new_trade_sell_order(self, test_db, mock_alpaca_client):
         """Test NEW_TRADE with SELL action"""
-        # Insert SELL decision
+        # Insert SELL decision with new structure
         decision = {
-            "action": "SELL",
+            "symbol": "TSLA",
+            "analysis_date": "2025-01-15",
+            "support": 190.0,
+            "resistance": 210.0,
             "primary_action": "NEW_TRADE",
-            "qty": 5,
-            "entry_price": 200.00,
-            "stop_loss": 205.00,
-            "trade_style": "DAYTRADE"
+            "new_trade": {
+                "strategy": "SWING",
+                "pattern": "SHORT_PATTERN",
+                "qty": 5,
+                "side": "sell",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 200.00,
+                "stop_loss": {
+                    "stop_price": 205.00
+                },
+                "reward_risk_ratio": 2.0,
+                "risk_amount": 25.00,
+                "risk_percentage": 1.0
+            }
         }
         decision_json = json.dumps(decision)
 
@@ -99,12 +113,24 @@ class TestOrderExecutorNewTrade:
 
     def test_new_trade_missing_required_fields(self, test_db, mock_alpaca_client):
         """Test NEW_TRADE with missing required fields"""
-        # Insert decision without qty
+        # Insert decision without qty (missing required field)
         decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 165.0,
             "primary_action": "NEW_TRADE",
-            "entry_price": 150.00,
-            "stop_loss": 145.00
+            "new_trade": {
+                "strategy": "SWING",
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 150.00,
+                "stop_loss": {
+                    "stop_price": 145.00
+                }
+                # Missing qty!
+            }
         }
         decision_json = json.dumps(decision)
 
@@ -138,11 +164,26 @@ class TestOrderExecutorNewTrade:
 
     def test_new_trade_multiple_decisions(self, test_db, mock_alpaca_client):
         """Test executor with multiple pending decisions"""
-        # Insert multiple decisions
+        # Insert multiple decisions with new structure
         decisions = [
-            ('TEST_001', 'AAPL', {"action": "BUY", "primary_action": "NEW_TRADE", "qty": 10, "entry_price": 150.00, "stop_loss": 145.00}),
-            ('TEST_002', 'MSFT', {"action": "BUY", "primary_action": "NEW_TRADE", "qty": 5, "entry_price": 300.00, "stop_loss": 290.00}),
-            ('TEST_003', 'GOOGL', {"action": "BUY", "primary_action": "NEW_TRADE", "qty": 3, "entry_price": 140.00, "stop_loss": 135.00})
+            ('TEST_001', 'AAPL', {
+                "symbol": "AAPL", "analysis_date": "2025-01-15", "support": 140.0, "resistance": 165.0,
+                "primary_action": "NEW_TRADE",
+                "new_trade": {"strategy": "SWING", "qty": 10, "side": "buy", "type": "limit",
+                              "time_in_force": "day", "limit_price": 150.00,
+                              "stop_loss": {"stop_price": 145.00}}}),
+            ('TEST_002', 'MSFT', {
+                "symbol": "MSFT", "analysis_date": "2025-01-15", "support": 285.0, "resistance": 315.0,
+                "primary_action": "NEW_TRADE",
+                "new_trade": {"strategy": "SWING", "qty": 5, "side": "buy", "type": "limit",
+                              "time_in_force": "day", "limit_price": 300.00,
+                              "stop_loss": {"stop_price": 290.00}}}),
+            ('TEST_003', 'GOOGL', {
+                "symbol": "GOOGL", "analysis_date": "2025-01-15", "support": 130.0, "resistance": 150.0,
+                "primary_action": "NEW_TRADE",
+                "new_trade": {"strategy": "SWING", "qty": 3, "side": "buy", "type": "limit",
+                              "time_in_force": "day", "limit_price": 140.00,
+                              "stop_loss": {"stop_price": 135.00}}})
         ]
 
         for analysis_id, ticker, decision in decisions:
@@ -167,15 +208,31 @@ class TestOrderExecutorNewTrade:
         assert 'GOOGL' in symbols
 
     def test_new_trade_with_take_profit(self, test_db, mock_alpaca_client):
-        """Test NEW_TRADE with take_profit specified"""
+        """Test NEW_TRADE with take_profit specified (SWING trade)"""
         decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 165.0,
             "primary_action": "NEW_TRADE",
-            "qty": 10,
-            "entry_price": 150.00,
-            "stop_loss": 145.00,
-            "take_profit": 160.00,
-            "trade_style": "SWING"
+            "new_trade": {
+                "strategy": "SWING",
+                "pattern": "Breakout",
+                "qty": 10,
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 150.00,
+                "stop_loss": {
+                    "stop_price": 145.00
+                },
+                "take_profit": {
+                    "limit_price": 160.00
+                },
+                "reward_risk_ratio": 2.0,
+                "risk_amount": 50.00,
+                "risk_percentage": 1.0
+            }
         }
         decision_json = json.dumps(decision)
 
@@ -194,14 +251,29 @@ class TestOrderExecutorNewTrade:
         assert float(trades[0]['planned_take_profit']) == 160.00
 
     def test_new_trade_daytrade_style(self, test_db, mock_alpaca_client):
-        """Test NEW_TRADE with DAYTRADE style (no take_profit)"""
+        """Test NEW_TRADE with TREND strategy (no take_profit)"""
         decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 165.0,
             "primary_action": "NEW_TRADE",
-            "qty": 10,
-            "entry_price": 150.00,
-            "stop_loss": 145.00,
-            "trade_style": "DAYTRADE"
+            "new_trade": {
+                "strategy": "TREND",
+                "pattern": "TrendFollowing",
+                "qty": 10,
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 150.00,
+                "stop_loss": {
+                    "stop_price": 145.00
+                },
+                # No take_profit for TREND trades
+                "reward_risk_ratio": 3.0,
+                "risk_amount": 50.00,
+                "risk_percentage": 1.0
+            }
         }
         decision_json = json.dumps(decision)
 
@@ -225,13 +297,24 @@ class TestOrderExecutorCancel:
 
     def test_cancel_existing_order(self, test_db, mock_alpaca_client):
         """Test canceling an existing order"""
-        # First create an order
+        # First create an order with new structure
         decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 165.0,
             "primary_action": "NEW_TRADE",
-            "qty": 10,
-            "entry_price": 150.00,
-            "stop_loss": 145.00
+            "new_trade": {
+                "strategy": "SWING",
+                "qty": 10,
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 150.00,
+                "stop_loss": {
+                    "stop_price": 145.00
+                }
+            }
         }
         decision_json = json.dumps(decision)
 
@@ -256,9 +339,12 @@ class TestOrderExecutorCancel:
         assert order_id in mock_alpaca_client.orders
         assert mock_alpaca_client.orders[order_id].status == 'pending'
 
-        # Now create a CANCEL decision
+        # Now create a CANCEL decision with new structure
         cancel_decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 165.0,
             "primary_action": "CANCEL"
         }
         cancel_json = json.dumps(cancel_decision)
@@ -291,7 +377,10 @@ class TestOrderExecutorCancel:
     def test_cancel_without_order_id(self, test_db, mock_alpaca_client):
         """Test CANCEL without existing order ID"""
         decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 165.0,
             "primary_action": "CANCEL"
         }
         decision_json = json.dumps(decision)
@@ -318,13 +407,24 @@ class TestOrderExecutorAmend:
 
     def test_amend_order(self, test_db, mock_alpaca_client):
         """Test amending an existing order"""
-        # First create an order
+        # First create an order with new structure
         decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 165.0,
             "primary_action": "NEW_TRADE",
-            "qty": 10,
-            "entry_price": 150.00,
-            "stop_loss": 145.00
+            "new_trade": {
+                "strategy": "SWING",
+                "qty": 10,
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 150.00,
+                "stop_loss": {
+                    "stop_price": 145.00
+                }
+            }
         }
         decision_json = json.dumps(decision)
 
@@ -345,13 +445,24 @@ class TestOrderExecutorAmend:
         original_order_id = original_decision['existing_order_id']
         original_trade_id = original_decision['existing_trade_journal_id']
 
-        # Create AMEND decision with new price
+        # Create AMEND decision with new price and quantity
         amend_decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 145.0,
+            "resistance": 170.0,
             "primary_action": "AMEND",
-            "qty": 15,  # Changed quantity
-            "entry_price": 155.00,  # Changed price
-            "stop_loss": 150.00
+            "new_trade": {
+                "strategy": "SWING",
+                "qty": 15,  # Changed quantity
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 155.00,  # Changed price
+                "stop_loss": {
+                    "stop_price": 150.00
+                }
+            }
         }
         amend_json = json.dumps(amend_decision)
 
@@ -394,11 +505,22 @@ class TestOrderExecutorErrorHandling:
     def test_invalid_primary_action(self, test_db, mock_alpaca_client):
         """Test handling of invalid primary_action"""
         decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 165.0,
             "primary_action": "INVALID_ACTION",
-            "qty": 10,
-            "entry_price": 150.00,
-            "stop_loss": 145.00
+            "new_trade": {
+                "strategy": "SWING",
+                "qty": 10,
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 150.00,
+                "stop_loss": {
+                    "stop_price": 145.00
+                }
+            }
         }
         decision_json = json.dumps(decision)
 
@@ -421,11 +543,22 @@ class TestOrderExecutorErrorHandling:
     def test_unapproved_decision_not_executed(self, test_db, mock_alpaca_client):
         """Test that unapproved decisions (Approve=false) are not executed"""
         decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 165.0,
             "primary_action": "NEW_TRADE",
-            "qty": 10,
-            "entry_price": 150.00,
-            "stop_loss": 145.00
+            "new_trade": {
+                "strategy": "SWING",
+                "qty": 10,
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 150.00,
+                "stop_loss": {
+                    "stop_price": 145.00
+                }
+            }
         }
         decision_json = json.dumps(decision)
 

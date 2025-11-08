@@ -150,5 +150,7 @@ def test_insert_analysis_decision_with_json(test_db, sample_analysis_decision):
 
     assert len(results) == 1
     assert results[0]['Ticker'] == 'AAPL'
-    assert results[0]['Decision']['action'] == 'BUY'
-    assert results[0]['Decision']['qty'] == 10
+    # Correct structure
+    assert results[0]['Decision']['primary_action'] == 'NEW_TRADE'
+    assert results[0]['Decision']['new_trade']['qty'] == 10
+    assert results[0]['Decision']['new_trade']['side'] == 'buy'

@@ -128,11 +128,25 @@ class TestOrderExecutorErrors:
 
     def test_multiple_decisions_one_fails(self, test_db):
         """Test that one failing decision doesn't prevent others from executing"""
-        # Create multiple decisions, one with missing fields
+        # Create multiple decisions with new structure, one with missing fields
         decisions = [
-            ('ERROR_GOOD_1', 'AAPL', {"action": "BUY", "primary_action": "NEW_TRADE", "qty": 10, "entry_price": 150.00, "stop_loss": 145.00}),
-            ('ERROR_BAD', 'MSFT', {"action": "BUY", "primary_action": "NEW_TRADE", "entry_price": 300.00}),  # Missing qty
-            ('ERROR_GOOD_2', 'GOOGL', {"action": "BUY", "primary_action": "NEW_TRADE", "qty": 5, "entry_price": 140.00, "stop_loss": 135.00})
+            ('ERROR_GOOD_1', 'AAPL', {
+                "symbol": "AAPL", "analysis_date": "2025-01-15", "support": 140.0, "resistance": 165.0,
+                "primary_action": "NEW_TRADE",
+                "new_trade": {"strategy": "SWING", "qty": 10, "side": "buy", "type": "limit",
+                              "time_in_force": "day", "limit_price": 150.00,
+                              "stop_loss": {"stop_price": 145.00}}}),
+            ('ERROR_BAD', 'MSFT', {
+                "symbol": "MSFT", "analysis_date": "2025-01-15", "support": 285.0, "resistance": 315.0,
+                "primary_action": "NEW_TRADE",
+                "new_trade": {"strategy": "SWING", "side": "buy", "type": "limit",
+                              "time_in_force": "day", "limit_price": 300.00}}),  # Missing qty and stop_loss!
+            ('ERROR_GOOD_2', 'GOOGL', {
+                "symbol": "GOOGL", "analysis_date": "2025-01-15", "support": 130.0, "resistance": 150.0,
+                "primary_action": "NEW_TRADE",
+                "new_trade": {"strategy": "SWING", "qty": 5, "side": "buy", "type": "limit",
+                              "time_in_force": "day", "limit_price": 140.00,
+                              "stop_loss": {"stop_price": 135.00}}})
         ]
 
         for analysis_id, ticker, decision in decisions:
@@ -166,7 +180,10 @@ class TestOrderExecutorErrors:
     def test_cancel_nonexistent_order(self, test_db):
         """Test canceling an order that doesn't exist"""
         decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 165.0,
             "primary_action": "CANCEL"
         }
         decision_json = json.dumps(decision)

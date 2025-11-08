@@ -23,16 +23,31 @@ class TestCompleteTradeLifecycle:
         5. TP order fills
         6. Trade closes with profit
         """
-        # STEP 1: Create analysis decision for NEW_TRADE
+        # STEP 1: Create analysis decision for NEW_TRADE with correct structure
         decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 165.0,
             "primary_action": "NEW_TRADE",
-            "qty": 10,
-            "entry_price": 150.00,
-            "stop_loss": 145.00,
-            "take_profit": 160.00,
-            "trade_style": "SWING",
-            "pattern": "Breakout"
+            "new_trade": {
+                "strategy": "SWING",
+                "pattern": "Breakout",
+                "qty": 10,
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 150.00,
+                "stop_loss": {
+                    "stop_price": 145.00
+                },
+                "take_profit": {
+                    "limit_price": 160.00
+                },
+                "reward_risk_ratio": 2.0,
+                "risk_amount": 50.00,
+                "risk_percentage": 1.0
+            }
         }
         decision_json = json.dumps(decision)
         test_db.execute_query("""
@@ -153,14 +168,29 @@ class TestCompleteTradeLifecycle:
         4. SL hits
         5. Trade closes with loss
         """
-        # STEP 1: Create decision
+        # STEP 1: Create decision with correct structure
         decision = {
-            "action": "BUY",
+            "symbol": "TSLA",
+            "analysis_date": "2025-01-15",
+            "support": 190.0,
+            "resistance": 210.0,
             "primary_action": "NEW_TRADE",
-            "qty": 5,
-            "entry_price": 200.00,
-            "stop_loss": 195.00,
-            "trade_style": "DAYTRADE"
+            "new_trade": {
+                "strategy": "TREND",
+                "pattern": "ShortTerm",
+                "qty": 5,
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 200.00,
+                "stop_loss": {
+                    "stop_price": 195.00
+                },
+                # No take_profit for TREND
+                "reward_risk_ratio": 2.0,
+                "risk_amount": 25.00,
+                "risk_percentage": 1.0
+            }
         }
         decision_json = json.dumps(decision)
         test_db.execute_query("""
@@ -246,12 +276,26 @@ class TestCompleteTradeLifecycle:
         """Test DAYTRADE lifecycle (no take profit)"""
         # Create DAYTRADE decision
         decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 160.0,
             "primary_action": "NEW_TRADE",
-            "qty": 10,
-            "entry_price": 150.00,
-            "stop_loss": 145.00,
-            "trade_style": "DAYTRADE"
+            "new_trade": {
+                "strategy": "TREND",
+                "pattern": "Daytrade",
+                "qty": 10,
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 150.00,
+                "stop_loss": {
+                    "stop_price": 145.00
+                },
+                "reward_risk_ratio": 2.0,
+                "risk_amount": 50.00,
+                "risk_percentage": 1.0
+            }
         }
         decision_json = json.dumps(decision)
         test_db.execute_query("""
@@ -287,12 +331,26 @@ class TestCompleteTradeLifecycle:
         """Test CANCEL action lifecycle"""
         # STEP 1: Create and execute NEW_TRADE
         decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 160.0,
             "primary_action": "NEW_TRADE",
-            "qty": 10,
-            "entry_price": 150.00,
-            "stop_loss": 145.00,
-            "trade_style": "DAYTRADE"
+            "new_trade": {
+                "strategy": "TREND",
+                "pattern": "Daytrade",
+                "qty": 10,
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 150.00,
+                "stop_loss": {
+                    "stop_price": 145.00
+                },
+                "reward_risk_ratio": 2.0,
+                "risk_amount": 50.00,
+                "risk_percentage": 1.0
+            }
         }
         decision_json = json.dumps(decision)
         test_db.execute_query("""
@@ -314,7 +372,10 @@ class TestCompleteTradeLifecycle:
 
         # STEP 2: Create CANCEL decision
         cancel_decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 160.0,
             "primary_action": "CANCEL"
         }
         cancel_json = json.dumps(cancel_decision)
@@ -339,12 +400,26 @@ class TestCompleteTradeLifecycle:
         """Test AMEND action lifecycle"""
         # STEP 1: Create and execute original order
         decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 140.0,
+            "resistance": 160.0,
             "primary_action": "NEW_TRADE",
-            "qty": 10,
-            "entry_price": 150.00,
-            "stop_loss": 145.00,
-            "trade_style": "DAYTRADE"
+            "new_trade": {
+                "strategy": "TREND",
+                "pattern": "Daytrade",
+                "qty": 10,
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 150.00,
+                "stop_loss": {
+                    "stop_price": 145.00
+                },
+                "reward_risk_ratio": 2.0,
+                "risk_amount": 50.00,
+                "risk_percentage": 1.0
+            }
         }
         decision_json = json.dumps(decision)
         test_db.execute_query("""
@@ -366,12 +441,26 @@ class TestCompleteTradeLifecycle:
 
         # STEP 2: Create AMEND decision with new parameters
         amend_decision = {
-            "action": "BUY",
+            "symbol": "AAPL",
+            "analysis_date": "2025-01-15",
+            "support": 145.0,
+            "resistance": 165.0,
             "primary_action": "AMEND",
-            "qty": 15,  # Changed
-            "entry_price": 155.00,  # Changed
-            "stop_loss": 150.00,  # Changed
-            "trade_style": "DAYTRADE"
+            "new_trade": {
+                "strategy": "TREND",
+                "pattern": "Daytrade",
+                "qty": 15,
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 155.00,
+                "stop_loss": {
+                    "stop_price": 150.00
+                },
+                "reward_risk_ratio": 2.0,
+                "risk_amount": 75.00,
+                "risk_percentage": 1.0
+            }
         }
         amend_json = json.dumps(amend_decision)
         test_db.execute_query("""
@@ -401,13 +490,29 @@ class TestCompleteTradeLifecycle:
         # Create and execute multiple trades
         for i, symbol in enumerate(symbols):
             decision = {
-                "action": "BUY",
+                "symbol": symbol,
+                "analysis_date": "2025-01-15",
+                "support": 140.0 + i * 10,
+                "resistance": 170.0 + i * 10,
                 "primary_action": "NEW_TRADE",
-                "qty": 10,
-                "entry_price": 150.00 + i * 10,
-                "stop_loss": 145.00 + i * 10,
-                "take_profit": 160.00 + i * 10,
-                "trade_style": "SWING"
+                "new_trade": {
+                    "strategy": "SWING",
+                    "pattern": "Breakout",
+                    "qty": 10,
+                    "side": "buy",
+                    "type": "limit",
+                    "time_in_force": "day",
+                    "limit_price": 150.00 + i * 10,
+                    "stop_loss": {
+                        "stop_price": 145.00 + i * 10
+                    },
+                    "take_profit": {
+                        "limit_price": 160.00 + i * 10
+                    },
+                    "reward_risk_ratio": 2.0,
+                    "risk_amount": 50.00,
+                    "risk_percentage": 1.0
+                }
             }
             decision_json = json.dumps(decision)
             test_db.execute_query("""
