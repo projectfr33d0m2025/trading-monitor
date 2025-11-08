@@ -48,11 +48,12 @@ class OrderExecutor:
             logger.info("Order Executor Starting")
             logger.info("=" * 60)
 
-            # Get unexecuted decisions where action is BUY or SELL
+            # Get unexecuted decisions where primary_action requires execution
             decisions = self.db.execute_query("""
                 SELECT * FROM analysis_decision
                 WHERE executed = false
-                AND "Decision"->>'action' IN ('BUY', 'SELL')
+                AND "Approve" = true
+                AND "Decision"->>'primary_action' IN ('NEW_TRADE', 'CANCEL', 'AMEND')
                 ORDER BY "Date_time" ASC
             """)
 

@@ -288,7 +288,8 @@ class OrderExecutor:
             decisions = self.db.execute_query("""
                 SELECT * FROM analysis_decision
                 WHERE executed = false
-                AND decision->>'action' IN ('BUY', 'SELL')
+                AND "Approve" = true
+                AND decision->>'primary_action' IN ('NEW_TRADE', 'CANCEL', 'AMEND')
                 ORDER BY "Date_time" ASC
             """)
             

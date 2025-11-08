@@ -417,3 +417,34 @@ class TestOrderExecutorErrorHandling:
             ('TEST_INVALID',)
         )[0]
         assert decision['executed'] is False
+
+    def test_unapproved_decision_not_executed(self, test_db, mock_alpaca_client):
+        """Test that unapproved decisions (Approve=false) are not executed"""
+        decision = {
+            "action": "BUY",
+            "primary_action": "NEW_TRADE",
+            "qty": 10,
+            "entry_price": 150.00,
+            "stop_loss": 145.00
+        }
+        decision_json = json.dumps(decision)
+
+        # Insert decision with Approve = false
+        test_db.execute_query("""
+            INSERT INTO analysis_decision (
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
+            ) VALUES (%s, %s, %s::jsonb, %s, %s)
+        """, ('TEST_UNAPPROVED', 'AAPL', decision_json, False, False))
+
+        executor = OrderExecutor(test_mode=True, db=test_db, alpaca_client=mock_alpaca_client)
+        executor.run()
+
+        # Verify no orders were placed
+        assert len(mock_alpaca_client.orders) == 0
+
+        # Verify decision was NOT marked as executed
+        decision = test_db.execute_query(
+            'SELECT * FROM analysis_decision WHERE "Analysis_Id" = %s',
+            ('TEST_UNAPPROVED',)
+        )[0]
+        assert decision['executed'] is False
