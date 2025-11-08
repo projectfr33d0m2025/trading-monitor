@@ -65,7 +65,7 @@ class TestOrderExecutorNewTrade:
             ('TEST_001',)
         )[0]
         assert decision['executed'] is True
-        assert decision['existing_order_id'] == order.id
+        assert decision['existing_order_id'] == str(order.id)
 
     def test_new_trade_sell_order(self, test_db, mock_alpaca_client):
         """Test NEW_TRADE with SELL action"""
@@ -291,6 +291,106 @@ class TestOrderExecutorNewTrade:
         assert len(trades) == 1
         assert trades[0]['planned_take_profit'] is None
 
+    def test_new_trade_with_gtc_time_in_force(self, test_db, mock_alpaca_client):
+        """Test NEW_TRADE with GTC (Good Till Cancelled) time_in_force"""
+        decision = {
+            "symbol": "NVDA",
+            "analysis_date": "2025-01-15",
+            "support": 120.0,
+            "resistance": 140.0,
+            "primary_action": "NEW_TRADE",
+            "new_trade": {
+                "strategy": "SWING",
+                "pattern": "Breakout",
+                "qty": 20,
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "gtc",  # GTC instead of DAY
+                "limit_price": 130.00,
+                "stop_loss": {
+                    "stop_price": 125.00
+                },
+                "take_profit": {
+                    "limit_price": 138.00
+                },
+                "reward_risk_ratio": 1.6,
+                "risk_amount": 100.00,
+                "risk_percentage": 1.0
+            }
+        }
+        decision_json = json.dumps(decision)
+
+        test_db.execute_query("""
+            INSERT INTO analysis_decision (
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
+            ) VALUES (%s, %s, %s::jsonb, %s, %s)
+        """, ('TEST_GTC', 'NVDA', decision_json, False, True))
+
+        executor = OrderExecutor(test_mode=True, db=test_db, alpaca_client=mock_alpaca_client)
+        executor.run()
+
+        # Verify order was placed with GTC time_in_force
+        assert len(mock_alpaca_client.orders) == 1
+        order = list(mock_alpaca_client.orders.values())[0]
+        assert order.symbol == 'NVDA'
+        assert order.time_in_force == 'gtc'  # Verify GTC was used
+
+        # Verify order_execution entry has GTC
+        orders = test_db.query('order_execution', 'order_type = %s', ('ENTRY',))
+        assert len(orders) == 1
+        order_exec = orders[0]
+        assert order_exec['time_in_force'] == 'gtc'
+
+    def test_new_trade_default_time_in_force(self, test_db, mock_alpaca_client):
+        """Test NEW_TRADE without time_in_force defaults to GTC"""
+        decision = {
+            "symbol": "META",
+            "analysis_date": "2025-01-15",
+            "support": 450.0,
+            "resistance": 500.0,
+            "primary_action": "NEW_TRADE",
+            "new_trade": {
+                "strategy": "SWING",
+                "pattern": "Breakout",
+                "qty": 5,
+                "side": "buy",
+                "type": "limit",
+                # No time_in_force specified - should default to GTC
+                "limit_price": 475.00,
+                "stop_loss": {
+                    "stop_price": 465.00
+                },
+                "take_profit": {
+                    "limit_price": 495.00
+                },
+                "reward_risk_ratio": 2.0,
+                "risk_amount": 50.00,
+                "risk_percentage": 1.0
+            }
+        }
+        decision_json = json.dumps(decision)
+
+        test_db.execute_query("""
+            INSERT INTO analysis_decision (
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
+            ) VALUES (%s, %s, %s::jsonb, %s, %s)
+        """, ('TEST_DEFAULT_TIF', 'META', decision_json, False, True))
+
+        executor = OrderExecutor(test_mode=True, db=test_db, alpaca_client=mock_alpaca_client)
+        executor.run()
+
+        # Verify order was placed with default GTC time_in_force
+        assert len(mock_alpaca_client.orders) == 1
+        order = list(mock_alpaca_client.orders.values())[0]
+        assert order.symbol == 'META'
+        assert order.time_in_force == 'gtc'  # Should default to GTC
+
+        # Verify order_execution entry has GTC
+        orders = test_db.query('order_execution', 'order_type = %s', ('ENTRY',))
+        assert len(orders) == 1
+        order_exec = orders[0]
+        assert order_exec['time_in_force'] == 'gtc'
+
 
 class TestOrderExecutorCancel:
     """Test CANCEL functionality"""
@@ -488,7 +588,7 @@ class TestOrderExecutorAmend:
 
         # Verify new order was created
         assert len(mock_alpaca_client.orders) == 2
-        new_orders = [o for o in mock_alpaca_client.orders.values() if o.id != original_order_id]
+        new_orders = [o for o in mock_alpaca_client.orders.values() if str(o.id) != original_order_id]
         assert len(new_orders) == 1
         new_order = new_orders[0]
         assert float(new_order.qty) == 15.0

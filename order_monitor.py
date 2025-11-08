@@ -149,7 +149,8 @@ class OrderMonitor:
             """, (trade_journal_id,))[0]
 
             filled_price = float(alpaca_order.filled_avg_price)
-            filled_qty = int(alpaca_order.filled_qty)
+            filled_qty_actual = float(alpaca_order.filled_qty)  # Actual qty for calculations
+            filled_qty_db = max(1, int(alpaca_order.filled_qty))  # Qty for database (handle fractional)
 
             # Update trade_journal
             self.db.execute_query("""
@@ -161,14 +162,14 @@ class OrderMonitor:
                 WHERE id = %s
             """, (
                 filled_price,
-                filled_qty,
+                filled_qty_db,
                 trade_journal_id
             ))
 
             logger.info(f"Updated trade_journal {trade_journal_id} to POSITION status")
 
             # Create position_tracking entry
-            cost_basis = filled_price * filled_qty
+            cost_basis = filled_price * filled_qty_actual  # Use actual qty for accurate cost basis
             self.db.execute_query("""
                 INSERT INTO position_tracking (
                     trade_journal_id, symbol, qty, avg_entry_price,
@@ -178,7 +179,7 @@ class OrderMonitor:
             """, (
                 trade_journal_id,
                 symbol,
-                filled_qty,
+                filled_qty_db,
                 filled_price,
                 filled_price,  # Initial current price = entry price
                 cost_basis,  # Initial market value = cost basis
@@ -189,14 +190,14 @@ class OrderMonitor:
             logger.info(f"Created position_tracking entry for {symbol}")
 
             # Place Stop-Loss order
-            sl_order = self.place_stop_loss(trade, filled_qty)
+            sl_order = self.place_stop_loss(trade, filled_qty_actual)
 
             # Place Take-Profit order (if SWING trade)
             tp_order = None
             if trade['trade_style'] == 'SWING' and trade['planned_take_profit']:
-                tp_order = self.place_take_profit(trade, filled_qty)
+                tp_order = self.place_take_profit(trade, filled_qty_actual)
 
-            logger.info(f"✅ Entry filled for {symbol}: price=${filled_price}, qty={filled_qty}")
+            logger.info(f"✅ Entry filled for {symbol}: price=${filled_price}, qty={filled_qty_actual}")
 
         except Exception as e:
             logger.error(f"Error handling entry fill for {symbol}: {e}", exc_info=True)
@@ -352,8 +353,8 @@ class OrderMonitor:
             # Calculate P&L
             exit_price = float(alpaca_order.filled_avg_price)
             entry_price = float(trade['actual_entry'])
-            qty = int(alpaca_order.filled_qty)
-            pnl = (exit_price - entry_price) * qty
+            qty_actual = float(alpaca_order.filled_qty)  # Use actual qty for accurate P&L
+            pnl = (exit_price - entry_price) * qty_actual
 
             # Determine exit reason
             exit_reason = 'STOPPED_OUT' if order['order_type'] == 'STOP_LOSS' else 'TARGET_HIT'

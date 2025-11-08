@@ -477,7 +477,7 @@ class TestCompleteTradeLifecycle:
         assert mock_alpaca_client.orders[original_order_id].status == 'cancelled'
 
         # Verify new order was created with new parameters
-        new_orders = [o for o in mock_alpaca_client.orders.values() if o.id != original_order_id]
+        new_orders = [o for o in mock_alpaca_client.orders.values() if str(o.id) != original_order_id]
         assert len(new_orders) == 1
         new_order = new_orders[0]
         assert float(new_order.qty) == 15.0

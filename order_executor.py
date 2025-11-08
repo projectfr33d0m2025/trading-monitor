@@ -131,12 +131,26 @@ class OrderExecutor:
         strategy = new_trade.get('strategy', 'SWING')  # SWING or TREND (was trade_style)
         pattern = new_trade.get('pattern', '')
 
+        # Extract time_in_force from JSON, default to GTC
+        time_in_force_str = new_trade.get('time_in_force', 'gtc')
+
+        # Map string to Alpaca TimeInForce enum
+        time_in_force_map = {
+            'day': TimeInForce.DAY,
+            'gtc': TimeInForce.GTC,
+            'ioc': TimeInForce.IOC,
+            'fok': TimeInForce.FOK,
+            'opg': TimeInForce.OPG,
+            'cls': TimeInForce.CLS
+        }
+        time_in_force = time_in_force_map.get(time_in_force_str.lower(), TimeInForce.GTC)
+
         # Validate required fields
         if not all([qty, limit_price, stop_price]):
             logger.error(f"Missing required fields for {analysis_id}: qty={qty}, limit_price={limit_price}, stop_price={stop_price}")
             return
 
-        logger.info(f"Placing {side.upper()} order for {symbol}: qty={qty}, entry=${limit_price}, sl=${stop_price}, tp=${take_profit_price}")
+        logger.info(f"Placing {side.upper()} order for {symbol}: qty={qty}, entry=${limit_price}, sl=${stop_price}, tp=${take_profit_price}, time_in_force=${time_in_force}")
 
         try:
             # Determine order side from new structure
@@ -145,9 +159,9 @@ class OrderExecutor:
             # Submit limit order to Alpaca
             order_request = LimitOrderRequest(
                 symbol=symbol,
-                qty=int(qty),
+                qty=float(qty),  # Send actual fractional qty to Alpaca
                 side=order_side,
-                time_in_force=TimeInForce.DAY,
+                time_in_force=time_in_force,
                 limit_price=float(limit_price)
             )
 
@@ -176,7 +190,7 @@ class OrderExecutor:
                 float(limit_price),  # Was entry_price
                 float(stop_price),    # Was stop_loss
                 float(take_profit_price) if take_profit_price else None,
-                int(qty)
+                max(1, int(qty))  # Store 1 for fractional, int(qty) for whole numbers
             ))[0]['id']
 
             logger.info(f"Created trade_journal entry: {trade_journal_id}")
@@ -196,8 +210,8 @@ class OrderExecutor:
                 'ENTRY',
                 side.lower(),  # buy or sell from new_trade
                 'pending',
-                'day',
-                int(qty),
+                time_in_force_str.lower(),  # Use actual time_in_force from decision
+                max(1, int(qty)),  # Store 1 for fractional, int(qty) for whole numbers
                 float(limit_price)  # Was entry_price
             ))
 
