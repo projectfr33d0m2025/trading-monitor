@@ -499,7 +499,14 @@ class OrderExecutor:
         
         # Cancel order with Alpaca
         self.alpaca.cancel_order_by_id(order_id)
-        
+
+        # Update order_execution status immediately
+        self.db.execute_query("""
+            UPDATE order_execution
+            SET order_status = 'cancelled'
+            WHERE alpaca_order_id = %s
+        """, (order_id,))
+
         # Update trade_journal
         self.db.execute_query("""
             UPDATE trade_journal

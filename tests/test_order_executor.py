@@ -367,6 +367,13 @@ class TestOrderExecutorCancel:
         assert trade['status'] == 'CANCELLED'
         assert trade['exit_reason'] == 'CANCELLED'
 
+        # Verify order_execution was updated
+        order_execution = test_db.execute_query(
+            'SELECT * FROM order_execution WHERE alpaca_order_id = %s',
+            (order_id,)
+        )[0]
+        assert order_execution['order_status'] == 'cancelled'
+
         # Verify decision was marked as executed
         cancel_dec = test_db.execute_query(
             'SELECT * FROM analysis_decision WHERE "Analysis_Id" = %s',
@@ -375,7 +382,7 @@ class TestOrderExecutorCancel:
         assert cancel_dec['executed'] is True
 
     def test_cancel_without_order_id(self, test_db, mock_alpaca_client):
-        """Test CANCEL without existing order ID"""
+        """Test CANCEL without existing order ID - no order_execution update should occur"""
         decision = {
             "symbol": "AAPL",
             "analysis_date": "2025-01-15",

@@ -250,6 +250,15 @@ class OrderExecutor:
 
             logger.info(f"Order {order_id} cancelled successfully")
 
+            # Update order_execution status immediately
+            self.db.execute_query("""
+                UPDATE order_execution
+                SET order_status = 'cancelled'
+                WHERE alpaca_order_id = %s
+            """, (order_id,))
+
+            logger.info(f"Updated order_execution for {order_id} to cancelled")
+
             # Update trade_journal if it exists
             if trade_journal_id:
                 self.db.execute_query("""
