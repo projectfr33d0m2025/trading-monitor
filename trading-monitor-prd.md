@@ -426,12 +426,26 @@ class OrderExecutor:
         take_profit = decision_data.get('take_profit')
         trade_style = decision_data.get('trade_style', 'DAYTRADE')
         
+        # Extract time_in_force from JSON, default to GTC
+        time_in_force_str = decision_data.get('time_in_force', 'gtc')
+
+        # Map string to Alpaca TimeInForce enum
+        time_in_force_map = {
+            'day': TimeInForce.DAY,
+            'gtc': TimeInForce.GTC,
+            'ioc': TimeInForce.IOC,
+            'fok': TimeInForce.FOK,
+            'opg': TimeInForce.OPG,
+            'cls': TimeInForce.CLS
+        }
+        time_in_force = time_in_force_map.get(time_in_force_str.lower(), TimeInForce.GTC)
+
         # Submit order to Alpaca
         order_request = LimitOrderRequest(
             symbol=symbol,
             qty=qty,
             side=OrderSide.BUY,
-            time_in_force=TimeInForce.DAY,
+            time_in_force=time_in_force,
             limit_price=entry_price
         )
         
@@ -472,7 +486,7 @@ class OrderExecutor:
             'ENTRY',
             'buy',
             'pending',
-            'day',
+            time_in_force_str.lower(),  # Use extracted time_in_force
             qty,
             entry_price
         ))
