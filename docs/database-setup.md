@@ -161,9 +161,9 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO your_user;
 
 ### Relationships (Application-Level Only)
 - `analysis_decision.existing_trade_journal_id` → `trade_journal.id`
-- `trade_journal.initial_analysis_id` → `analysis_decision.Analysis Id`
+- `trade_journal.initial_analysis_id` → `analysis_decision.Analysis_Id`
 - `order_execution.trade_journal_id` → `trade_journal.id`
-- `order_execution.analysis_decision_id` → `analysis_decision.Analysis Id`
+- `order_execution.analysis_decision_id` → `analysis_decision.Analysis_Id`
 - `position_tracking.trade_journal_id` → `trade_journal.id`
 
 **Note:** These relationships are NOT enforced by foreign key constraints. The application code manages referential integrity.

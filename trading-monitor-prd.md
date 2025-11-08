@@ -34,14 +34,14 @@ Develop a Python-based trading system monitoring solution that tracks the comple
 
 | Column | Data Type | Default | Description |
 |--------|-----------|---------|-------------|
-| Analysis Id | VARCHAR(255) | PRIMARY KEY | Unique analysis identifier |
-| Date time | TIMESTAMP | NOW() | Analysis timestamp |
+| Analysis_Id | VARCHAR(255) | PRIMARY KEY | Unique analysis identifier |
+| Date_time | TIMESTAMP | NOW() | Analysis timestamp |
 | Ticker | VARCHAR(50) | NOT NULL | Stock symbol |
 | Chart | TEXT | NULL | Chart image reference |
-| Analysis Prompt | TEXT | NULL | Prompt sent to AI |
-| 3 Month Chart | TEXT | NULL | 3-month chart reference |
+| Analysis_Prompt | TEXT | NULL | Prompt sent to AI |
+| 3_Month_Chart | TEXT | NULL | 3-month chart reference |
 | Analysis | TEXT | NULL | AI analysis text |
-| Trade Type | VARCHAR(50) | NULL | Type of trade |
+| Trade_Type | VARCHAR(50) | NULL | Type of trade |
 | Decision | JSONB | NULL | AI decision in JSON format |
 | Approve | BOOLEAN | false | Manual approval flag |
 | Date | DATE | NULL | Date formula field |
@@ -289,7 +289,7 @@ class OrderExecutor:
                 SELECT * FROM analysis_decision
                 WHERE executed = false
                 AND decision->>'action' IN ('BUY', 'SELL')
-                ORDER BY "Date time" ASC
+                ORDER BY "Date_time" ASC
             """)
             
             logger.info(f"Found {len(decisions)} unexecuted decisions")
@@ -386,7 +386,7 @@ class OrderExecutor:
                 execution_time = NOW(),
                 existing_order_id = %s,
                 existing_trade_journal_id = %s
-            WHERE "Analysis Id" = %s
+            WHERE "Analysis_Id" = %s
         """, (order.id, trade_journal_id, decision['Analysis Id']))
         
         logger.info(f"Placed order {order.id} for {symbol}")
@@ -417,7 +417,7 @@ class OrderExecutor:
             UPDATE analysis_decision
             SET executed = true,
                 execution_time = NOW()
-            WHERE "Analysis Id" = %s
+            WHERE "Analysis_Id" = %s
         """, (decision['Analysis Id'],))
         
         logger.info(f"Cancelled order {order_id}")
@@ -1024,14 +1024,14 @@ class TradingDB:
         schema_sql = """
         -- Create analysis_decision table (for testing/dev only)
         CREATE TABLE IF NOT EXISTS analysis_decision (
-            "Analysis Id" VARCHAR(255) PRIMARY KEY,
-            "Date time" TIMESTAMP DEFAULT NOW(),
+            "Analysis_Id" VARCHAR(255) PRIMARY KEY,
+            "Date_time" TIMESTAMP DEFAULT NOW(),
             "Ticker" VARCHAR(50) NOT NULL,
             "Chart" TEXT,
-            "Analysis Prompt" TEXT,
-            "3 Month Chart" TEXT,
+            "Analysis_Prompt" TEXT,
+            "3_Month_Chart" TEXT,
             "Analysis" TEXT,
-            "Trade Type" VARCHAR(50),
+            "Trade_Type" VARCHAR(50),
             "Decision" JSONB,
             "Approve" BOOLEAN DEFAULT false,
             "Date" DATE,
@@ -1458,7 +1458,7 @@ def test_new_trade_execution(test_db, mock_alpaca):
     # Insert test analysis decision (complete table available in test DB)
     test_db.execute_query("""
         INSERT INTO analysis_decision (
-            "Analysis Id", "Ticker", "Date time", 
+            "Analysis_Id", "Ticker", "Date_time", 
             "Decision", executed, "Approve"
         ) VALUES (
             'TEST_001', 'AAPL', NOW(),
@@ -1526,7 +1526,7 @@ def test_order_executor_invalid_decision(test_db, mock_alpaca):
     # Insert malformed decision
     test_db.execute_query("""
         INSERT INTO analysis_decision (
-            "Analysis Id", "Ticker", "Date time", 
+            "Analysis_Id", "Ticker", "Date_time", 
             decision, executed
         ) VALUES (
             'test_002', 'AAPL', NOW(),

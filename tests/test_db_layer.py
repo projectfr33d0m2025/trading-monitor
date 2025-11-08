@@ -132,10 +132,10 @@ def test_insert_analysis_decision_with_json(test_db, sample_analysis_decision):
 
     test_db.execute_query("""
         INSERT INTO analysis_decision (
-            "Analysis Id", "Ticker", "Decision", executed, "Approve"
+            "Analysis_Id", "Ticker", "Decision", executed, "Approve"
         ) VALUES (%s, %s, %s::jsonb, %s, %s)
     """, (
-        sample_analysis_decision['Analysis Id'],
+        sample_analysis_decision['Analysis_Id'],
         sample_analysis_decision['Ticker'],
         decision_json,
         sample_analysis_decision['executed'],
@@ -144,7 +144,7 @@ def test_insert_analysis_decision_with_json(test_db, sample_analysis_decision):
 
     # Query it back
     results = test_db.execute_query(
-        'SELECT * FROM analysis_decision WHERE "Analysis Id" = %s',
+        'SELECT * FROM analysis_decision WHERE "Analysis_Id" = %s',
         ('TEST_001',)
     )
 

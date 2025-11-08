@@ -16,10 +16,10 @@ class TestOrderExecutorNewTrade:
         decision_json = json.dumps(sample_analysis_decision['Decision'])
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, (
-            sample_analysis_decision['Analysis Id'],
+            sample_analysis_decision['Analysis_Id'],
             sample_analysis_decision['Ticker'],
             decision_json,
             sample_analysis_decision['executed'],
@@ -61,7 +61,7 @@ class TestOrderExecutorNewTrade:
 
         # Verify analysis_decision was marked as executed
         decision = test_db.execute_query(
-            'SELECT * FROM analysis_decision WHERE "Analysis Id" = %s',
+            'SELECT * FROM analysis_decision WHERE "Analysis_Id" = %s',
             ('TEST_001',)
         )[0]
         assert decision['executed'] is True
@@ -82,7 +82,7 @@ class TestOrderExecutorNewTrade:
 
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('TEST_SELL', 'TSLA', decision_json, False, True))
 
@@ -110,7 +110,7 @@ class TestOrderExecutorNewTrade:
 
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('TEST_MISSING', 'AAPL', decision_json, False, True))
 
@@ -123,7 +123,7 @@ class TestOrderExecutorNewTrade:
 
         # Verify decision was NOT marked as executed
         decision = test_db.execute_query(
-            'SELECT * FROM analysis_decision WHERE "Analysis Id" = %s',
+            'SELECT * FROM analysis_decision WHERE "Analysis_Id" = %s',
             ('TEST_MISSING',)
         )[0]
         assert decision['executed'] is False
@@ -149,7 +149,7 @@ class TestOrderExecutorNewTrade:
             decision_json = json.dumps(decision)
             test_db.execute_query("""
                 INSERT INTO analysis_decision (
-                    "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                    "Analysis_Id", "Ticker", "Decision", executed, "Approve"
                 ) VALUES (%s, %s, %s::jsonb, %s, %s)
             """, (analysis_id, ticker, decision_json, False, True))
 
@@ -181,7 +181,7 @@ class TestOrderExecutorNewTrade:
 
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('TEST_TP', 'AAPL', decision_json, False, True))
 
@@ -207,7 +207,7 @@ class TestOrderExecutorNewTrade:
 
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('TEST_DT', 'AAPL', decision_json, False, True))
 
@@ -237,7 +237,7 @@ class TestOrderExecutorCancel:
 
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('TEST_CANCEL_ORIG', 'AAPL', decision_json, False, True))
 
@@ -246,7 +246,7 @@ class TestOrderExecutorCancel:
 
         # Get the order ID and trade journal ID
         original_decision = test_db.execute_query(
-            'SELECT * FROM analysis_decision WHERE "Analysis Id" = %s',
+            'SELECT * FROM analysis_decision WHERE "Analysis_Id" = %s',
             ('TEST_CANCEL_ORIG',)
         )[0]
         order_id = original_decision['existing_order_id']
@@ -265,7 +265,7 @@ class TestOrderExecutorCancel:
 
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve",
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve",
                 existing_order_id, existing_trade_journal_id
             ) VALUES (%s, %s, %s::jsonb, %s, %s, %s, %s)
         """, ('TEST_CANCEL', 'AAPL', cancel_json, False, True, order_id, trade_journal_id))
@@ -283,7 +283,7 @@ class TestOrderExecutorCancel:
 
         # Verify decision was marked as executed
         cancel_dec = test_db.execute_query(
-            'SELECT * FROM analysis_decision WHERE "Analysis Id" = %s',
+            'SELECT * FROM analysis_decision WHERE "Analysis_Id" = %s',
             ('TEST_CANCEL',)
         )[0]
         assert cancel_dec['executed'] is True
@@ -298,7 +298,7 @@ class TestOrderExecutorCancel:
 
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('TEST_CANCEL_NO_ID', 'AAPL', decision_json, False, True))
 
@@ -307,7 +307,7 @@ class TestOrderExecutorCancel:
 
         # Verify decision was marked as executed (to prevent reprocessing)
         decision = test_db.execute_query(
-            'SELECT * FROM analysis_decision WHERE "Analysis Id" = %s',
+            'SELECT * FROM analysis_decision WHERE "Analysis_Id" = %s',
             ('TEST_CANCEL_NO_ID',)
         )[0]
         assert decision['executed'] is True
@@ -330,7 +330,7 @@ class TestOrderExecutorAmend:
 
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('TEST_AMEND_ORIG', 'AAPL', decision_json, False, True))
 
@@ -339,7 +339,7 @@ class TestOrderExecutorAmend:
 
         # Get original order ID
         original_decision = test_db.execute_query(
-            'SELECT * FROM analysis_decision WHERE "Analysis Id" = %s',
+            'SELECT * FROM analysis_decision WHERE "Analysis_Id" = %s',
             ('TEST_AMEND_ORIG',)
         )[0]
         original_order_id = original_decision['existing_order_id']
@@ -357,7 +357,7 @@ class TestOrderExecutorAmend:
 
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve",
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve",
                 existing_order_id, existing_trade_journal_id
             ) VALUES (%s, %s, %s::jsonb, %s, %s, %s, %s)
         """, ('TEST_AMEND', 'AAPL', amend_json, False, True, original_order_id, original_trade_id))
@@ -378,7 +378,7 @@ class TestOrderExecutorAmend:
 
         # Verify AMEND decision was marked as executed
         amend_dec = test_db.execute_query(
-            'SELECT * FROM analysis_decision WHERE "Analysis Id" = %s',
+            'SELECT * FROM analysis_decision WHERE "Analysis_Id" = %s',
             ('TEST_AMEND',)
         )[0]
         assert amend_dec['executed'] is True
@@ -404,7 +404,7 @@ class TestOrderExecutorErrorHandling:
 
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('TEST_INVALID', 'AAPL', decision_json, False, True))
 
@@ -413,7 +413,7 @@ class TestOrderExecutorErrorHandling:
 
         # Should not crash - verify decision was NOT marked as executed
         decision = test_db.execute_query(
-            'SELECT * FROM analysis_decision WHERE "Analysis Id" = %s',
+            'SELECT * FROM analysis_decision WHERE "Analysis_Id" = %s',
             ('TEST_INVALID',)
         )[0]
         assert decision['executed'] is False

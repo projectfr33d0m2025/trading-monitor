@@ -192,14 +192,14 @@ class TradingDB:
         schema_sql = f"""
         -- Create analysis_decision table (for testing/dev only)
         CREATE TABLE IF NOT EXISTS {self.schema}.analysis_decision (
-            "Analysis Id" VARCHAR(255) PRIMARY KEY,
-            "Date time" TIMESTAMP DEFAULT NOW(),
+            "Analysis_Id" VARCHAR(255) PRIMARY KEY,
+            "Date_time" TIMESTAMP DEFAULT NOW(),
             "Ticker" VARCHAR(50) NOT NULL,
             "Chart" TEXT,
-            "Analysis Prompt" TEXT,
-            "3 Month Chart" TEXT,
+            "Analysis_Prompt" TEXT,
+            "3_Month_Chart" TEXT,
             "Analysis" TEXT,
-            "Trade Type" VARCHAR(50),
+            "Trade_Type" VARCHAR(50),
             "Decision" JSONB,
             "Approve" BOOLEAN DEFAULT false,
             "Date" DATE,

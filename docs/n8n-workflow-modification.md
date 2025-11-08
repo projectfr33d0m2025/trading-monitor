@@ -38,7 +38,7 @@ After the "Save Analysis" node, add a new node:
 ```yaml
 Operation: UPDATE
 Table: analysis_decision
-Where Clause: "Analysis Id" = {{ $node["Save Analysis"].json["Analysis Id"] }}
+Where Clause: "Analysis_Id" = {{ $node["Save Analysis"].json["Analysis_Id"] }}
 ```
 
 ### Step 3: Configure Field Mappings
@@ -155,13 +155,13 @@ SET
   existing_trade_journal_id = COALESCE(:trade_journal_id, NULL),
   executed = false,
   execution_time = NULL
-WHERE "Analysis Id" = :analysis_id
+WHERE "Analysis_Id" = :analysis_id
 ```
 
 **Parameters:**
 - `:pending_order_id` → `{{ $node["Current Position"].json["pending_order_id"] }}`
 - `:trade_journal_id` → `{{ $node["Current Position"].json["trade_journal_id"] }}`
-- `:analysis_id` → `{{ $node["Save Analysis"].json["Analysis Id"] }}`
+- `:analysis_id` → `{{ $node["Save Analysis"].json["Analysis_Id"] }}`
 
 ### NocoDB Node
 
@@ -193,12 +193,12 @@ SELECT
   pt.trade_journal_id
 FROM analysis_decision ad
 LEFT JOIN order_execution oe
-  ON oe.analysis_decision_id = ad."Analysis Id"
+  ON oe.analysis_decision_id = ad."Analysis_Id"
   AND oe.order_status IN ('pending', 'new', 'accepted')
   AND oe.order_type = 'ENTRY'
 LEFT JOIN position_tracking pt
   ON pt.symbol = ad."Ticker"
-WHERE ad."Analysis Id" = :analysis_id
+WHERE ad."Analysis_Id" = :analysis_id
 LIMIT 1
 ```
 
@@ -229,7 +229,7 @@ Run the workflow and verify:
 
 ```sql
 SELECT
-  "Analysis Id",
+  "Analysis_Id",
   "Ticker",
   "Decision"->>'primary_action' as action,
   existing_order_id,
@@ -311,7 +311,7 @@ Expected results:
 ### Issue: PostgreSQL syntax errors
 
 **Check:**
-1. Field names with spaces are quoted: `"Analysis Id"`
+1. Field names with spaces are quoted: `"Analysis_Id"`
 2. JSON operators use proper syntax: `->>`
 3. Parameters use correct placeholder syntax
 
@@ -344,7 +344,7 @@ const currentPos = $node["Current Position"].json;
 const analysis = $node["Save Analysis"].json;
 
 return {
-  analysis_id: analysis["Analysis Id"],
+  analysis_id: analysis["Analysis_Id"],
   existing_order_id: currentPos.pending_order_id || null,
   existing_trade_journal_id: currentPos.trade_journal_id || null,
   executed: false,

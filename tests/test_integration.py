@@ -37,7 +37,7 @@ class TestCompleteTradeLifecycle:
         decision_json = json.dumps(decision)
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('INTEGRATION_001', 'AAPL', decision_json, False, True))
 
@@ -165,7 +165,7 @@ class TestCompleteTradeLifecycle:
         decision_json = json.dumps(decision)
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('INTEGRATION_002', 'TSLA', decision_json, False, True))
 
@@ -256,7 +256,7 @@ class TestCompleteTradeLifecycle:
         decision_json = json.dumps(decision)
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('INTEGRATION_003', 'AAPL', decision_json, False, True))
 
@@ -297,7 +297,7 @@ class TestCompleteTradeLifecycle:
         decision_json = json.dumps(decision)
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('INTEGRATION_CANCEL_1', 'AAPL', decision_json, False, True))
 
@@ -306,7 +306,7 @@ class TestCompleteTradeLifecycle:
 
         # Get order and trade IDs
         original_decision = test_db.execute_query(
-            'SELECT * FROM analysis_decision WHERE "Analysis Id" = %s',
+            'SELECT * FROM analysis_decision WHERE "Analysis_Id" = %s',
             ('INTEGRATION_CANCEL_1',)
         )[0]
         order_id = original_decision['existing_order_id']
@@ -320,7 +320,7 @@ class TestCompleteTradeLifecycle:
         cancel_json = json.dumps(cancel_decision)
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve",
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve",
                 existing_order_id, existing_trade_journal_id
             ) VALUES (%s, %s, %s::jsonb, %s, %s, %s, %s)
         """, ('INTEGRATION_CANCEL_2', 'AAPL', cancel_json, False, True, order_id, trade_id))
@@ -349,7 +349,7 @@ class TestCompleteTradeLifecycle:
         decision_json = json.dumps(decision)
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('INTEGRATION_AMEND_1', 'AAPL', decision_json, False, True))
 
@@ -358,7 +358,7 @@ class TestCompleteTradeLifecycle:
 
         # Get original order
         original_decision = test_db.execute_query(
-            'SELECT * FROM analysis_decision WHERE "Analysis Id" = %s',
+            'SELECT * FROM analysis_decision WHERE "Analysis_Id" = %s',
             ('INTEGRATION_AMEND_1',)
         )[0]
         original_order_id = original_decision['existing_order_id']
@@ -376,7 +376,7 @@ class TestCompleteTradeLifecycle:
         amend_json = json.dumps(amend_decision)
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve",
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve",
                 existing_order_id, existing_trade_journal_id
             ) VALUES (%s, %s, %s::jsonb, %s, %s, %s, %s)
         """, ('INTEGRATION_AMEND_2', 'AAPL', amend_json, False, True, original_order_id, original_trade_id))
@@ -412,7 +412,7 @@ class TestCompleteTradeLifecycle:
             decision_json = json.dumps(decision)
             test_db.execute_query("""
                 INSERT INTO analysis_decision (
-                    "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                    "Analysis_Id", "Ticker", "Decision", executed, "Approve"
                 ) VALUES (%s, %s, %s::jsonb, %s, %s)
             """, (f'MULTI_{i}', symbol, decision_json, False, True))
 

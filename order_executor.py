@@ -53,7 +53,7 @@ class OrderExecutor:
                 SELECT * FROM analysis_decision
                 WHERE executed = false
                 AND "Decision"->>'action' IN ('BUY', 'SELL')
-                ORDER BY "Date time" ASC
+                ORDER BY "Date_time" ASC
             """)
 
             logger.info(f"Found {len(decisions)} unexecuted decisions")
@@ -79,7 +79,7 @@ class OrderExecutor:
         """
         decision_data = decision.get('Decision', {})
         primary_action = decision_data.get('primary_action')
-        analysis_id = decision['Analysis Id']
+        analysis_id = decision['Analysis_Id']
 
         logger.info(f"Processing decision {analysis_id}: {primary_action}")
 
@@ -105,7 +105,7 @@ class OrderExecutor:
             decision (dict): Decision record from database
         """
         decision_data = decision.get('Decision', {})
-        analysis_id = decision['Analysis Id']
+        analysis_id = decision['Analysis_Id']
 
         # Extract trade parameters
         symbol = decision['Ticker']
@@ -196,7 +196,7 @@ class OrderExecutor:
                     execution_time = NOW(),
                     existing_order_id = %s,
                     existing_trade_journal_id = %s
-                WHERE "Analysis Id" = %s
+                WHERE "Analysis_Id" = %s
             """, (order.id, trade_journal_id, analysis_id))
 
             logger.info(f"✅ Successfully placed order {order.id} for {symbol}")
@@ -213,7 +213,7 @@ class OrderExecutor:
         Args:
             decision (dict): Decision record from database
         """
-        analysis_id = decision['Analysis Id']
+        analysis_id = decision['Analysis_Id']
         order_id = decision.get('existing_order_id')
         trade_journal_id = decision.get('existing_trade_journal_id')
 
@@ -224,7 +224,7 @@ class OrderExecutor:
                 UPDATE analysis_decision
                 SET executed = true,
                     execution_time = NOW()
-                WHERE "Analysis Id" = %s
+                WHERE "Analysis_Id" = %s
             """, (analysis_id,))
             return
 
@@ -254,7 +254,7 @@ class OrderExecutor:
                 UPDATE analysis_decision
                 SET executed = true,
                     execution_time = NOW()
-                WHERE "Analysis Id" = %s
+                WHERE "Analysis_Id" = %s
             """, (analysis_id,))
 
             logger.info(f"✅ Successfully cancelled order {order_id}")
@@ -271,7 +271,7 @@ class OrderExecutor:
         Args:
             decision (dict): Decision record from database
         """
-        analysis_id = decision['Analysis Id']
+        analysis_id = decision['Analysis_Id']
         symbol = decision['Ticker']
 
         logger.info(f"Amending order for {symbol}")
@@ -284,7 +284,7 @@ class OrderExecutor:
             self.db.execute_query("""
                 UPDATE analysis_decision
                 SET executed = false
-                WHERE "Analysis Id" = %s
+                WHERE "Analysis_Id" = %s
             """, (analysis_id,))
 
             # Place the new order

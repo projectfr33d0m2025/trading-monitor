@@ -59,7 +59,7 @@ def test_db(postgresql_instance):
 def sample_analysis_decision():
     """Sample analysis decision data for testing"""
     return {
-        "Analysis Id": "TEST_001",
+        "Analysis_Id": "TEST_001",
         "Ticker": "AAPL",
         "Decision": {
             "action": "BUY",

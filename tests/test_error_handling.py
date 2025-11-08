@@ -102,7 +102,7 @@ class TestOrderExecutorErrors:
         decision_json = json.dumps(decision)
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('ERROR_001', 'AAPL', decision_json, False, True))
 
@@ -121,7 +121,7 @@ class TestOrderExecutorErrors:
 
         # Decision should NOT be marked as executed
         decision = test_db.execute_query(
-            'SELECT * FROM analysis_decision WHERE "Analysis Id" = %s',
+            'SELECT * FROM analysis_decision WHERE "Analysis_Id" = %s',
             ('ERROR_001',)
         )[0]
         # May still be False if error was handled properly
@@ -139,7 +139,7 @@ class TestOrderExecutorErrors:
             decision_json = json.dumps(decision)
             test_db.execute_query("""
                 INSERT INTO analysis_decision (
-                    "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                    "Analysis_Id", "Ticker", "Decision", executed, "Approve"
                 ) VALUES (%s, %s, %s::jsonb, %s, %s)
             """, (analysis_id, ticker, decision_json, False, True))
 
@@ -150,7 +150,7 @@ class TestOrderExecutorErrors:
 
         # Verify good decisions were executed
         good_decisions = test_db.execute_query(
-            'SELECT * FROM analysis_decision WHERE "Analysis Id" IN (%s, %s)',
+            'SELECT * FROM analysis_decision WHERE "Analysis_Id" IN (%s, %s)',
             ('ERROR_GOOD_1', 'ERROR_GOOD_2')
         )
         # At least one should have executed
@@ -158,7 +158,7 @@ class TestOrderExecutorErrors:
 
         # Bad decision should NOT be executed
         bad_decision = test_db.execute_query(
-            'SELECT * FROM analysis_decision WHERE "Analysis Id" = %s',
+            'SELECT * FROM analysis_decision WHERE "Analysis_Id" = %s',
             ('ERROR_BAD',)
         )[0]
         assert bad_decision['executed'] is False
@@ -172,7 +172,7 @@ class TestOrderExecutorErrors:
         decision_json = json.dumps(decision)
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve",
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve",
                 existing_order_id
             ) VALUES (%s, %s, %s::jsonb, %s, %s, %s)
         """, ('ERROR_CANCEL', 'AAPL', decision_json, False, True, 'nonexistent-order-id'))
@@ -408,7 +408,7 @@ class TestDatabaseErrors:
         try:
             test_db.execute_query("""
                 INSERT INTO analysis_decision (
-                    "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                    "Analysis_Id", "Ticker", "Decision", executed, "Approve"
                 ) VALUES (%s, %s, %s::jsonb, %s, %s)
             """, ('INVALID_DATA', 'AAPL', '{"invalid": }', False, True))
         except:
@@ -438,7 +438,7 @@ class TestEdgeCases:
         decision_json = json.dumps(decision)
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('EDGE_ZERO_QTY', 'AAPL', decision_json, False, True))
 
@@ -460,7 +460,7 @@ class TestEdgeCases:
         decision_json = json.dumps(decision)
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('EDGE_NEG_PRICE', 'AAPL', decision_json, False, True))
 
@@ -482,7 +482,7 @@ class TestEdgeCases:
         decision_json = json.dumps(decision)
         test_db.execute_query("""
             INSERT INTO analysis_decision (
-                "Analysis Id", "Ticker", "Decision", executed, "Approve"
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
             ) VALUES (%s, %s, %s::jsonb, %s, %s)
         """, ('EDGE_EMPTY_SYM', '', decision_json, False, True))
 
