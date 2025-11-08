@@ -22,6 +22,7 @@ class TradingDB:
         self.test_mode = test_mode
         config = get_postgres_config(test_mode)
 
+        self.schema = config['schema']
         self.connection_string = (
             f"host={config['host']} "
             f"port={config['port']} "
@@ -39,7 +40,11 @@ class TradingDB:
                 self.connection_string,
                 cursor_factory=RealDictCursor
             )
-            logger.info("Database connected successfully")
+            # Set search_path to use the configured schema
+            with self.conn.cursor() as cursor:
+                cursor.execute(f"SET search_path TO {self.schema}")
+                self.conn.commit()
+            logger.info(f"Database connected successfully (schema: {self.schema})")
         except Exception as e:
             logger.error(f"Database connection failed: {e}")
             raise
@@ -184,9 +189,9 @@ class TradingDB:
         NOTE: No foreign key constraints as NocoDB doesn't support them.
         Relationships are managed at application level.
         """
-        schema_sql = """
+        schema_sql = f"""
         -- Create analysis_decision table (for testing/dev only)
-        CREATE TABLE IF NOT EXISTS analysis_decision (
+        CREATE TABLE IF NOT EXISTS {self.schema}.analysis_decision (
             "Analysis Id" VARCHAR(255) PRIMARY KEY,
             "Date time" TIMESTAMP DEFAULT NOW(),
             "Ticker" VARCHAR(50) NOT NULL,
@@ -206,18 +211,18 @@ class TradingDB:
         );
 
         -- Create trade_journal table
-        CREATE TABLE IF NOT EXISTS trade_journal (
+        CREATE TABLE IF NOT EXISTS {self.schema}.trade_journal (
             id SERIAL PRIMARY KEY,
             trade_id VARCHAR(50) UNIQUE NOT NULL,
             symbol VARCHAR(50) NOT NULL,
-            trade_style VARCHAR(20) {trade_style_constraint},
+            trade_style VARCHAR(20) {{trade_style_constraint}},
             pattern VARCHAR(50),
             status VARCHAR(20) NOT NULL DEFAULT 'ORDERED',
             initial_analysis_id VARCHAR(255),
-            planned_entry DECIMAL(10,2) {planned_entry_constraint},
-            planned_stop_loss DECIMAL(10,2) {planned_stop_loss_constraint},
+            planned_entry DECIMAL(10,2) {{planned_entry_constraint}},
+            planned_stop_loss DECIMAL(10,2) {{planned_stop_loss_constraint}},
             planned_take_profit DECIMAL(10,2),
-            planned_qty INT {planned_qty_constraint},
+            planned_qty INT {{planned_qty_constraint}},
             actual_entry DECIMAL(10,2),
             actual_qty INT,
             current_stop_loss DECIMAL(10,2),
@@ -232,7 +237,7 @@ class TradingDB:
         );
 
         -- Create order_execution table
-        CREATE TABLE IF NOT EXISTS order_execution (
+        CREATE TABLE IF NOT EXISTS {self.schema}.order_execution (
             id SERIAL PRIMARY KEY,
             trade_journal_id INT NOT NULL,
             analysis_decision_id VARCHAR(255),
@@ -241,7 +246,7 @@ class TradingDB:
             order_type VARCHAR(50) NOT NULL,
             side VARCHAR(10) NOT NULL,
             order_status VARCHAR(20) NOT NULL DEFAULT 'pending',
-            time_in_force VARCHAR(10) {time_in_force_constraint},
+            time_in_force VARCHAR(10) {{time_in_force_constraint}},
             qty INT NOT NULL,
             limit_price DECIMAL(10,2),
             stop_price DECIMAL(10,2),
@@ -252,7 +257,7 @@ class TradingDB:
         );
 
         -- Create position_tracking table
-        CREATE TABLE IF NOT EXISTS position_tracking (
+        CREATE TABLE IF NOT EXISTS {self.schema}.position_tracking (
             id SERIAL PRIMARY KEY,
             trade_journal_id INT NOT NULL UNIQUE,
             symbol VARCHAR(50) NOT NULL,
@@ -268,15 +273,15 @@ class TradingDB:
         );
 
         -- Create indices
-        CREATE INDEX IF NOT EXISTS idx_analysis_decision_executed ON analysis_decision(executed);
-        CREATE INDEX IF NOT EXISTS idx_analysis_decision_ticker ON analysis_decision("Ticker");
-        CREATE INDEX IF NOT EXISTS idx_trade_journal_status ON trade_journal(status);
-        CREATE INDEX IF NOT EXISTS idx_trade_journal_symbol ON trade_journal(symbol);
-        CREATE INDEX IF NOT EXISTS idx_trade_journal_analysis_id ON trade_journal(initial_analysis_id);
-        CREATE INDEX IF NOT EXISTS idx_order_execution_status ON order_execution(order_status);
-        CREATE INDEX IF NOT EXISTS idx_order_execution_trade_journal ON order_execution(trade_journal_id);
-        CREATE INDEX IF NOT EXISTS idx_position_tracking_symbol ON position_tracking(symbol);
-        CREATE INDEX IF NOT EXISTS idx_position_tracking_trade_journal ON position_tracking(trade_journal_id);
+        CREATE INDEX IF NOT EXISTS idx_analysis_decision_executed ON {self.schema}.analysis_decision(executed);
+        CREATE INDEX IF NOT EXISTS idx_analysis_decision_ticker ON {self.schema}.analysis_decision("Ticker");
+        CREATE INDEX IF NOT EXISTS idx_trade_journal_status ON {self.schema}.trade_journal(status);
+        CREATE INDEX IF NOT EXISTS idx_trade_journal_symbol ON {self.schema}.trade_journal(symbol);
+        CREATE INDEX IF NOT EXISTS idx_trade_journal_analysis_id ON {self.schema}.trade_journal(initial_analysis_id);
+        CREATE INDEX IF NOT EXISTS idx_order_execution_status ON {self.schema}.order_execution(order_status);
+        CREATE INDEX IF NOT EXISTS idx_order_execution_trade_journal ON {self.schema}.order_execution(trade_journal_id);
+        CREATE INDEX IF NOT EXISTS idx_position_tracking_symbol ON {self.schema}.position_tracking(symbol);
+        CREATE INDEX IF NOT EXISTS idx_position_tracking_trade_journal ON {self.schema}.position_tracking(trade_journal_id);
         """
 
         # Set constraints based on test mode

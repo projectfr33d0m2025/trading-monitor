@@ -26,7 +26,8 @@ def get_postgres_config(test_mode=False):
         'port': int(os.getenv(f'{prefix}POSTGRES_PORT', '5432')),
         'database': os.getenv(f'{prefix}POSTGRES_DB', 'nocodb' if not test_mode else 'test'),
         'user': os.getenv(f'{prefix}POSTGRES_USER', 'postgres'),
-        'password': os.getenv(f'{prefix}POSTGRES_PASSWORD', '')
+        'password': os.getenv(f'{prefix}POSTGRES_PASSWORD', ''),
+        'schema': os.getenv(f'{prefix}POSTGRES_SCHEMA', 'public')
     }
 
 
