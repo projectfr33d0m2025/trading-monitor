@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Filter, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Zap, FileText, XCircle, Clock, CheckCircle, Package } from 'lucide-react';
+import { Filter, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Zap, Clock, CheckCircle, XCircle, Package, ShoppingCart, StopCircle, Trophy } from 'lucide-react';
 import { api } from '../lib/api';
-import type { TradeJournal, PaginatedResponse } from '../lib/types';
+import type { TradeJournal, PaginatedResponse, OrderExecution, PositionTracking } from '../lib/types';
+
+interface TradeWithDetails extends TradeJournal {
+  orders?: OrderExecution[];
+  position?: PositionTracking;
+}
 
 export default function TradeJournalPage() {
-  const [trades, setTrades] = useState<PaginatedResponse<TradeJournal> | null>(null);
+  const [trades, setTrades] = useState<PaginatedResponse<TradeWithDetails> | null>(null);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -12,7 +17,8 @@ export default function TradeJournalPage() {
 
   // Filters
   const [filterSymbol, setFilterSymbol] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<string>('PENDING_ACTIVE');
+  const [filterDateRange, setFilterDateRange] = useState<string>('ALL');
   const [showFilters, setShowFilters] = useState(true);
 
   // Pagination
@@ -21,28 +27,110 @@ export default function TradeJournalPage() {
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, filterSymbol, filterStatus]);
+  }, [currentPage, filterSymbol, filterStatus, filterDateRange]);
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
 
     try {
+      // Build status filter
+      let statusParam: string | undefined = undefined;
+      if (filterStatus === 'PENDING_ACTIVE') {
+        // We'll filter client-side for multiple statuses
+        statusParam = undefined;
+      } else if (filterStatus !== 'ALL') {
+        statusParam = filterStatus;
+      }
+
       const [tradesData, statsData] = await Promise.all([
         api.getTrades({
           page: currentPage,
           page_size: pageSize,
           symbol: filterSymbol || undefined,
-          status: filterStatus || undefined,
+          status: statusParam,
         }),
         api.getTradeStats(),
       ]);
-      setTrades(tradesData);
+
+      // Apply client-side filtering
+      let filteredTrades = tradesData.data;
+
+      // Filter by status for PENDING_ACTIVE
+      if (filterStatus === 'PENDING_ACTIVE') {
+        filteredTrades = filteredTrades.filter(
+          (trade) => trade.status === 'ORDERED' || trade.status === 'POSITION'
+        );
+      }
+
+      // Filter by date range
+      if (filterDateRange !== 'ALL' && tradesData.data.length > 0) {
+        const now = new Date();
+        const cutoffDate = new Date();
+
+        if (filterDateRange === 'LAST_7_DAYS') {
+          cutoffDate.setDate(now.getDate() - 7);
+        } else if (filterDateRange === 'LAST_30_DAYS') {
+          cutoffDate.setDate(now.getDate() - 30);
+        }
+
+        filteredTrades = filteredTrades.filter((trade) => {
+          if (!trade.created_at) return true;
+          return new Date(trade.created_at) >= cutoffDate;
+        });
+      }
+
+      setTrades({
+        ...tradesData,
+        data: filteredTrades,
+        total: filteredTrades.length,
+      });
       setStats(statsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch trades');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleTrade = async (tradeId: number, tradeJournalId: number, status: string) => {
+    if (expandedTrade === tradeId) {
+      setExpandedTrade(null);
+    } else {
+      setExpandedTrade(tradeId);
+
+      // Find the trade in our state
+      const trade = trades?.data.find((t) => t.id === tradeId);
+      if (trade && !trade.orders) {
+        try {
+          // Fetch orders for this trade
+          const ordersData = await api.getOrdersByTrade(tradeJournalId);
+
+          // Fetch position data if it's an active position
+          let positionData: PositionTracking | undefined = undefined;
+          if (status === 'POSITION') {
+            try {
+              const positionsData = await api.getPositions({ page: 1, page_size: 100 });
+              positionData = positionsData.data.find((p) => p.trade_journal_id === tradeJournalId);
+            } catch (err) {
+              console.error('Failed to fetch position:', err);
+            }
+          }
+
+          // Update the trade with orders and position data
+          setTrades((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              data: prev.data.map((t) =>
+                t.id === tradeId ? { ...t, orders: ordersData.data, position: positionData } : t
+              ),
+            };
+          });
+        } catch (err) {
+          console.error('Failed to fetch orders:', err);
+        }
+      }
     }
   };
 
@@ -57,7 +145,7 @@ export default function TradeJournalPage() {
       case 'CANCELLED':
         return <XCircle className="w-5 h-5" />;
       default:
-        return <FileText className="w-5 h-5" />;
+        return <Package className="w-5 h-5" />;
     }
   };
 
@@ -92,6 +180,32 @@ export default function TradeJournalPage() {
     return <Package className="w-4 h-4" />;
   };
 
+  const getOrderTypeIcon = (orderType: string) => {
+    switch (orderType) {
+      case 'ENTRY':
+        return <ShoppingCart className="w-4 h-4" />;
+      case 'STOP_LOSS':
+        return <StopCircle className="w-4 h-4" />;
+      case 'TAKE_PROFIT':
+        return <Trophy className="w-4 h-4" />;
+      default:
+        return <Package className="w-4 h-4" />;
+    }
+  };
+
+  const getOrderTypeBadgeColor = (orderType: string) => {
+    switch (orderType) {
+      case 'ENTRY':
+        return 'bg-blue-100 text-blue-800';
+      case 'STOP_LOSS':
+        return 'bg-red-100 text-red-800';
+      case 'TAKE_PROFIT':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const formatCurrency = (value?: number | string | null) => {
     if (value === undefined || value === null) return 'N/A';
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
@@ -110,6 +224,11 @@ export default function TradeJournalPage() {
     );
   };
 
+  const formatPercent = (entry: number, current: number) => {
+    const change = ((current - entry) / entry) * 100;
+    return `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+  };
+
   const statusCounts = stats?.status_breakdown || {};
 
   return (
@@ -119,7 +238,7 @@ export default function TradeJournalPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Trade Journal</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Track all your trades from entry to exit
+            Track all your trades from entry to exit with positions and orders
           </p>
         </div>
         <button
@@ -139,7 +258,7 @@ export default function TradeJournalPage() {
             <div key={status} className={`bg-gradient-to-br ${getStatusGradient(status)} rounded-lg shadow-lg p-6 text-white`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium opacity-90 uppercase">{status}</p>
+                  <p className="text-sm font-medium opacity-90 uppercase">{status === 'ORDERED' ? 'PENDING' : status}</p>
                   <p className="text-3xl font-bold mt-1">{count}</p>
                 </div>
                 <div className="opacity-30">
@@ -154,19 +273,7 @@ export default function TradeJournalPage() {
       {/* Filters */}
       {showFilters && (
         <div className="bg-white p-4 rounded-lg shadow space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Symbol
-              </label>
-              <input
-                type="text"
-                value={filterSymbol}
-                onChange={(e) => setFilterSymbol(e.target.value.toUpperCase())}
-                placeholder="e.g., NVDA"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Status
@@ -176,11 +283,38 @@ export default function TradeJournalPage() {
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">All Statuses</option>
-                <option value="ORDERED">Ordered</option>
-                <option value="POSITION">Position</option>
+                <option value="PENDING_ACTIVE">Pending & Active</option>
+                <option value="ORDERED">Pending</option>
+                <option value="POSITION">Active</option>
                 <option value="CLOSED">Closed</option>
                 <option value="CANCELLED">Cancelled</option>
+                <option value="ALL">All Statuses</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Symbol
+              </label>
+              <input
+                type="text"
+                value={filterSymbol}
+                onChange={(e) => setFilterSymbol(e.target.value.toUpperCase())}
+                placeholder="Type symbol (e.g., NVDA)"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date Range
+              </label>
+              <select
+                value={filterDateRange}
+                onChange={(e) => setFilterDateRange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="ALL">All Time</option>
+                <option value="LAST_7_DAYS">Last 7 Days</option>
+                <option value="LAST_30_DAYS">Last 30 Days</option>
               </select>
             </div>
           </div>
@@ -208,13 +342,14 @@ export default function TradeJournalPage() {
             {trades.data.map((trade) => {
               const isExpanded = expandedTrade === trade.id;
               const statusColorClass = getStatusColor(trade.status);
+              const orders = trade.orders || [];
 
               return (
                 <div key={trade.id} className={`bg-white rounded-lg shadow-md border-2 ${statusColorClass} overflow-hidden transition-all`}>
                   {/* Trade Header */}
                   <div
                     className="p-4 sm:p-6 cursor-pointer hover:bg-gray-50"
-                    onClick={() => setExpandedTrade(isExpanded ? null : trade.id)}
+                    onClick={() => toggleTrade(trade.id, trade.id, trade.status)}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
@@ -238,9 +373,14 @@ export default function TradeJournalPage() {
                         <div className="text-right">
                           <span className={`px-3 py-1 inline-flex items-center text-sm font-semibold rounded-full ${statusColorClass}`}>
                             {getStatusIcon(trade.status)}
-                            <span className="ml-1.5">{trade.status}</span>
+                            <span className="ml-1.5">{trade.status === 'ORDERED' ? 'PENDING' : trade.status}</span>
                           </span>
-                          {trade.actual_pnl !== null && trade.actual_pnl !== undefined && (
+                          {trade.status === 'POSITION' && trade.position && (
+                            <div className="mt-2">
+                              {formatPnL(trade.position.unrealized_pnl)}
+                            </div>
+                          )}
+                          {trade.status === 'CLOSED' && trade.actual_pnl !== null && trade.actual_pnl !== undefined && (
                             <div className="mt-2">
                               {formatPnL(trade.actual_pnl)}
                             </div>
@@ -254,82 +394,227 @@ export default function TradeJournalPage() {
                       </div>
                     </div>
 
-                    {/* Trade Summary */}
+                    {/* Trade Summary - Different based on status */}
                     <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Entry Price</p>
-                        <p className="text-lg font-semibold text-gray-900">
-                          {formatCurrency(trade.actual_entry || trade.planned_entry)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Quantity</p>
-                        <p className="text-lg font-semibold text-gray-900">
-                          {trade.actual_qty || trade.planned_qty || 'N/A'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Days Open</p>
-                        <p className="text-lg font-semibold text-gray-900">{trade.days_open}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wide">Stop Loss</p>
-                        <p className="text-lg font-semibold text-gray-900">
-                          {formatCurrency(trade.current_stop_loss || trade.planned_stop_loss)}
-                        </p>
-                      </div>
+                      {trade.status === 'ORDERED' && (
+                        <>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Planned Entry</p>
+                            <p className="text-lg font-semibold text-gray-900">
+                              {formatCurrency(trade.planned_entry)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Quantity</p>
+                            <p className="text-lg font-semibold text-gray-900">
+                              {trade.planned_qty || 'N/A'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Stop Loss</p>
+                            <p className="text-lg font-semibold text-gray-900">
+                              {formatCurrency(trade.planned_stop_loss)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Pattern</p>
+                            <p className="text-lg font-semibold text-gray-900">
+                              {trade.pattern || 'N/A'}
+                            </p>
+                          </div>
+                        </>
+                      )}
+
+                      {trade.status === 'POSITION' && (
+                        <>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Entry Price</p>
+                            <p className="text-lg font-semibold text-gray-900">
+                              {formatCurrency(trade.actual_entry || trade.planned_entry)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Quantity</p>
+                            <p className="text-lg font-semibold text-gray-900">
+                              {trade.actual_qty || trade.planned_qty || 'N/A'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Days Open</p>
+                            <p className="text-lg font-semibold text-gray-900">{trade.days_open}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Current Price</p>
+                            <p className="text-lg font-semibold text-gray-900">
+                              {trade.position ? formatCurrency(trade.position.current_price) : 'N/A'}
+                            </p>
+                          </div>
+                        </>
+                      )}
+
+                      {(trade.status === 'CLOSED' || trade.status === 'CANCELLED') && (
+                        <>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Entry → Exit</p>
+                            <p className="text-lg font-semibold text-gray-900">
+                              {formatCurrency(trade.actual_entry)} → {formatCurrency(trade.exit_price)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Duration</p>
+                            <p className="text-lg font-semibold text-gray-900">{trade.days_open} days</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Final P&L</p>
+                            <p className="text-lg font-semibold text-gray-900">
+                              {formatPnL(trade.actual_pnl)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Exit Reason</p>
+                            <p className="text-lg font-semibold text-gray-900">
+                              {trade.exit_reason || 'N/A'}
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
                   {/* Expandable Details */}
                   {isExpanded && (
                     <div className="border-t border-gray-200 bg-gray-50 p-4 sm:p-6">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {trade.planned_take_profit && (
-                          <div>
-                            <p className="text-sm text-gray-500">Take Profit Target</p>
-                            <p className="text-base font-semibold text-gray-900">
-                              {formatCurrency(trade.planned_take_profit)}
-                            </p>
+                      {/* Position Details for POSITION status */}
+                      {trade.status === 'POSITION' && trade.position && (
+                        <div className="mb-6">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-4 flex items-center">
+                            <Package className="w-4 h-4 mr-2" />
+                            Position Details
+                          </h4>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-white rounded-lg">
+                            <div className="text-center">
+                              <p className="text-xs text-gray-500 mb-1">Avg Entry</p>
+                              <p className="text-lg font-semibold text-gray-900">{formatCurrency(trade.position.avg_entry_price)}</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs text-gray-500 mb-1">Current Price</p>
+                              <p className="text-lg font-semibold text-gray-900">{formatCurrency(trade.position.current_price)}</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs text-gray-500 mb-1">Market Value</p>
+                              <p className="text-lg font-semibold text-gray-900">{formatCurrency(trade.position.market_value)}</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs text-gray-500 mb-1">Unrealized P&L</p>
+                              <p className={`text-lg font-semibold ${trade.position.unrealized_pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {formatCurrency(trade.position.unrealized_pnl)}
+                              </p>
+                            </div>
                           </div>
-                        )}
-                        {trade.exit_price && (
-                          <div>
-                            <p className="text-sm text-gray-500">Exit Price</p>
-                            <p className="text-base font-semibold text-gray-900">
-                              {formatCurrency(trade.exit_price)}
-                            </p>
+                        </div>
+                      )}
+
+                      {/* Order Chain */}
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-4 flex items-center">
+                          <ShoppingCart className="w-4 h-4 mr-2" />
+                          {trade.status === 'CLOSED' || trade.status === 'CANCELLED' ? 'Order History' : 'Order Chain'}
+                        </h4>
+
+                        {orders.length > 0 ? (
+                          <div className="space-y-3">
+                            {orders.map((order) => (
+                              <div key={order.id} className="bg-white rounded-lg p-4 shadow-sm border-l-4" style={{
+                                borderLeftColor: order.order_type === 'ENTRY' ? '#3b82f6' : order.order_type === 'STOP_LOSS' ? '#ef4444' : '#10b981'
+                              }}>
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center space-x-3">
+                                    <div className={`p-2 rounded-lg ${getOrderTypeBadgeColor(order.order_type)}`}>
+                                      {getOrderTypeIcon(order.order_type)}
+                                    </div>
+                                    <div>
+                                      <div className="flex items-center space-x-2">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getOrderTypeBadgeColor(order.order_type)}`}>
+                                          {order.order_type.replace('_', ' ')}
+                                        </span>
+                                        <span className="text-xs uppercase font-medium text-gray-600">{order.side}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <span className={`text-sm font-medium px-2 py-1 rounded ${
+                                      order.order_status === 'filled' ? 'bg-green-100 text-green-800' :
+                                      order.order_status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                      'bg-yellow-100 text-yellow-800'
+                                    }`}>
+                                      {order.order_status === 'filled' && <CheckCircle className="w-3 h-3 inline mr-1" />}
+                                      {order.order_status.toUpperCase()}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm text-gray-600">
+                                  <div>
+                                    <span className="text-gray-500">Qty:</span>{' '}
+                                    <span className="font-semibold text-gray-900">{order.qty}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-500">Price:</span>{' '}
+                                    <span className="font-semibold text-gray-900">
+                                      {formatCurrency(order.limit_price || order.stop_price)}
+                                    </span>
+                                  </div>
+                                  {order.filled_qty !== null && order.filled_qty > 0 && (
+                                    <>
+                                      <div>
+                                        <span className="text-gray-500">Filled:</span>{' '}
+                                        <span className="font-semibold text-gray-900">{order.filled_qty}</span>
+                                      </div>
+                                      <div>
+                                        <span className="text-gray-500">Avg:</span>{' '}
+                                        <span className="font-semibold text-gray-900">
+                                          {formatCurrency(order.filled_avg_price)}
+                                        </span>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        )}
-                        {trade.exit_reason && (
-                          <div>
-                            <p className="text-sm text-gray-500">Exit Reason</p>
-                            <p className="text-base font-semibold text-gray-900">{trade.exit_reason}</p>
-                          </div>
-                        )}
-                        {trade.pattern && (
-                          <div>
-                            <p className="text-sm text-gray-500">Pattern</p>
-                            <p className="text-base font-semibold text-gray-900">{trade.pattern}</p>
-                          </div>
-                        )}
-                        {trade.created_at && (
-                          <div>
-                            <p className="text-sm text-gray-500">Created</p>
-                            <p className="text-base font-semibold text-gray-900">
-                              {new Date(trade.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                        )}
-                        {trade.exit_date && (
-                          <div>
-                            <p className="text-sm text-gray-500">Exit Date</p>
-                            <p className="text-base font-semibold text-gray-900">
-                              {new Date(trade.exit_date).toLocaleDateString()}
-                            </p>
-                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500 italic">No orders found for this trade</p>
                         )}
                       </div>
+
+                      {/* Additional Trade Details */}
+                      {(trade.pattern || trade.created_at || trade.exit_date) && (
+                        <div className="mt-6 pt-4 border-t border-gray-200">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {trade.pattern && (
+                              <div>
+                                <p className="text-sm text-gray-500">Pattern</p>
+                                <p className="text-base font-semibold text-gray-900">{trade.pattern}</p>
+                              </div>
+                            )}
+                            {trade.created_at && (
+                              <div>
+                                <p className="text-sm text-gray-500">Created</p>
+                                <p className="text-base font-semibold text-gray-900">
+                                  {new Date(trade.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                            )}
+                            {trade.exit_date && (
+                              <div>
+                                <p className="text-sm text-gray-500">Exit Date</p>
+                                <p className="text-base font-semibold text-gray-900">
+                                  {new Date(trade.exit_date).toLocaleDateString()}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -338,32 +623,34 @@ export default function TradeJournalPage() {
           </div>
 
           {/* Pagination */}
-          <div className="bg-white px-4 py-3 flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 rounded-lg shadow gap-3">
-            <div className="text-sm text-gray-700 text-center sm:text-left">
-              Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to{' '}
-              <span className="font-medium">{Math.min(currentPage * pageSize, trades.total)}</span> of{' '}
-              <span className="font-medium">{trades.total}</span> results
+          {trades.total > pageSize && (
+            <div className="bg-white px-4 py-3 flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 rounded-lg shadow gap-3">
+              <div className="text-sm text-gray-700 text-center sm:text-left">
+                Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to{' '}
+                <span className="font-medium">{Math.min(currentPage * pageSize, trades.total)}</span> of{' '}
+                <span className="font-medium">{trades.total}</span> results
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <span className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white">
+                  Page {currentPage}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  disabled={currentPage * pageSize >= trades.total}
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white">
-                Page {currentPage}
-              </span>
-              <button
-                onClick={() => setCurrentPage(p => p + 1)}
-                disabled={currentPage * pageSize >= trades.total}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+          )}
         </>
       )}
     </div>

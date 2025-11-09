@@ -15,10 +15,10 @@ SET search_path TO puqnwnmsw0z9m6s;
 
 BEGIN;
 
--- Clear all tables (CASCADE handles dependencies)
-TRUNCATE TABLE position_tracking CASCADE;
-TRUNCATE TABLE order_execution CASCADE;
-TRUNCATE TABLE trade_journal CASCADE;
+-- Clear all tables and reset auto-increment sequences (CASCADE handles dependencies)
+TRUNCATE TABLE position_tracking RESTART IDENTITY CASCADE;
+TRUNCATE TABLE order_execution RESTART IDENTITY CASCADE;
+TRUNCATE TABLE trade_journal RESTART IDENTITY CASCADE;
 
 -- Delete only test analysis decisions (prefixed with TEST_)
 DELETE FROM analysis_decision WHERE "Analysis_Id" LIKE 'TEST_%';
