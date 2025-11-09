@@ -1,354 +1,343 @@
-import { useState, useEffect } from 'react';
-import { Filter, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, TrendingUp, FileText, Zap } from 'lucide-react';
-import { api } from '../lib/api';
-import type { AnalysisDecision, PaginatedResponse } from '../lib/types';
+import React, { useEffect, useState } from 'react';
+import { DateSelector } from '../components/DateSelector';
+import { SymbolDropdown } from '../components/SymbolDropdown';
+import { AnalysisDetails } from '../components/AnalysisDetails';
+import { AnalysisContent } from '../components/AnalysisContent';
+import { ChartView } from '../components/ChartView';
+import type { AnalysisDecision } from '../lib/types';
+import { fetchAnalysesByDate, formatDateForAPI, getImageUrl } from '../utils/api';
+import { ChevronDown, ChevronUp, Filter } from 'lucide-react';
+import '../styles/analysis.css';
 
 export default function AnalysisPage() {
-  const [analyses, setAnalyses] = useState<PaginatedResponse<AnalysisDecision> | null>(null);
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [analyses, setAnalyses] = useState<AnalysisDecision[]>([]);
+  const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
+  const [currentAnalysis, setCurrentAnalysis] = useState<AnalysisDecision | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expandedAnalysis, setExpandedAnalysis] = useState<string | null>(null);
+  const [activeChartTab, setActiveChartTab] = useState<'3month' | '1year'>('3month');
+  const [filtersCollapsed, setFiltersCollapsed] = useState(false);
 
-  // Filters
-  const [filterTicker, setFilterTicker] = useState('');
-  const [filterExecuted, setFilterExecuted] = useState<boolean | undefined>(undefined);
-  const [filterApproved, setFilterApproved] = useState<boolean | undefined>(undefined);
-  const [showFilters, setShowFilters] = useState(true);
-
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 20;
-
-  useEffect(() => {
-    fetchData();
-  }, [currentPage, filterTicker, filterExecuted, filterApproved]);
-
-  const fetchData = async () => {
-    setLoading(true);
+  const handleDateSelect = async (date: Date) => {
+    setSelectedDate(date);
+    setSelectedSymbol(null);
+    setCurrentAnalysis(null);
     setError(null);
 
+    setLoading(true);
+
     try {
-      const [analysesData, statsData] = await Promise.all([
-        api.getAnalyses({
-          page: currentPage,
-          page_size: pageSize,
-          ticker: filterTicker || undefined,
-          executed: filterExecuted,
-          approved: filterApproved,
-        }),
-        api.getAnalysisStats(),
-      ]);
-      setAnalyses(analysesData);
-      setStats(statsData);
+      const formattedDate = formatDateForAPI(date);
+      const fetchedAnalyses = await fetchAnalysesByDate(formattedDate);
+      setAnalyses(fetchedAnalyses);
     } catch (err) {
+      console.error('Error fetching analyses:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch analyses');
+      setAnalyses([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusIcon = (analysis: AnalysisDecision) => {
-    if (analysis.executed) {
-      return <CheckCircle className="w-5 h-5" />;
-    }
-    if (analysis.Approve) {
-      return <CheckCircle className="w-5 h-5" />;
-    }
-    return <Clock className="w-5 h-5" />;
-  };
-
-  const getStatusGradient = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return 'from-yellow-500 to-yellow-600';
-      case 'APPROVED':
-        return 'from-blue-500 to-blue-600';
-      case 'EXECUTED':
-        return 'from-green-500 to-green-600';
-      default:
-        return 'from-gray-400 to-gray-500';
+  const handleSymbolSelect = (symbol: string) => {
+    setSelectedSymbol(symbol);
+    const analysis = analyses.find(a => a.Ticker === symbol);
+    if (analysis) {
+      setCurrentAnalysis(analysis);
     }
   };
 
-  const getStatusColor = (analysis: AnalysisDecision) => {
-    if (analysis.executed) {
-      return 'bg-green-100 text-green-800 border-green-200';
+  const handleRemarksUpdate = (analysisId: string, newRemarks: string) => {
+    setAnalyses(prevAnalyses =>
+      prevAnalyses.map(a =>
+        a.Analysis_Id === analysisId
+          ? { ...a, Remarks: newRemarks }
+          : a
+      )
+    );
+
+    if (currentAnalysis && currentAnalysis.Analysis_Id === analysisId) {
+      setCurrentAnalysis({
+        ...currentAnalysis, Remarks: newRemarks
+      });
     }
-    if (analysis.Approve) {
-      return 'bg-blue-100 text-blue-800 border-blue-200';
+  };
+
+  useEffect(() => {
+    if (!selectedDate) {
+      const today = new Date();
+      handleDateSelect(today);
     }
-    return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-  };
-
-  const getStatusLabel = (analysis: AnalysisDecision) => {
-    if (analysis.executed) return 'EXECUTED';
-    if (analysis.Approve) return 'APPROVED';
-    return 'PENDING';
-  };
-
-  const getTradeTypeIcon = (tradeType?: string) => {
-    if (!tradeType) return <FileText className="w-4 h-4" />;
-    if (tradeType.toLowerCase().includes('swing')) return <Zap className="w-4 h-4" />;
-    if (tradeType.toLowerCase().includes('trend')) return <TrendingUp className="w-4 h-4" />;
-    return <FileText className="w-4 h-4" />;
-  };
-
-  const statusBreakdown = stats?.status_breakdown || {};
+  }, []);
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Analysis Decisions</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Review and track AI-generated trading analysis decisions
-          </p>
-        </div>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filters
-          {showFilters ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
-        </button>
-      </div>
+    <div className="h-screen flex flex-col lg:h-screen lg:flex lg:flex-col">
+      <div className="lg:contents">
+        <div className="px-3 sm:px-4 lg:px-6 py-2 sm:py-4 bg-white shadow-sm border-b analysis-main-content lg:flex-shrink-0">
+          <div className="flex items-center justify-between mb-2 sm:mb-4">
+            <h2 className="text-lg sm:text-2xl font-bold ml-10 sm:ml-0">Analysis & Decision</h2>
+            <button
+              onClick={() => setFiltersCollapsed(!filtersCollapsed)}
+              className="sm:hidden p-1.5 hover:bg-gray-100 rounded-md transition-colors flex items-center gap-1 text-sm text-gray-600"
+              aria-label={filtersCollapsed ? "Show filters" : "Hide filters"}
+            >
+              <Filter size={16} />
+              {filtersCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+            </button>
+          </div>
 
-      {/* Summary Cards */}
-      {!loading && stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {Object.entries(statusBreakdown).map(([status, count]: [string, any]) => (
-            <div key={status} className={`bg-gradient-to-br ${getStatusGradient(status)} rounded-lg shadow-lg p-6 text-white`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium opacity-90 uppercase">{status}</p>
-                  <p className="text-3xl font-bold mt-1">{count}</p>
+          <div className={`${filtersCollapsed ? 'hidden' : 'flex'} sm:flex flex-row gap-2 sm:gap-4 analysis-selectors w-full transition-all duration-200`}>
+            <div className="flex-1 min-w-0">
+              <DateSelector onDateSelect={handleDateSelect} inline />
+            </div>
+            <div className="flex-1 min-w-0">
+              <SymbolDropdown
+                analyses={analyses}
+                selectedSymbol={selectedSymbol}
+                onSymbolSelect={handleSymbolSelect}
+                inline
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-3 sm:p-4 lg:p-6 lg:flex-1 lg:min-h-0 lg:overflow-hidden">
+          {loading && (
+            <div className="flex items-center justify-center p-8 lg:h-full">
+              <div className="flex flex-col items-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                <p className="mt-4 text-gray-600">Loading analyses...</p>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
                 </div>
-                <div className="opacity-30">
-                  {status === 'PENDING' && <Clock className="w-12 h-12" />}
-                  {status === 'APPROVED' && <CheckCircle className="w-12 h-12" />}
-                  {status === 'EXECUTED' && <CheckCircle className="w-12 h-12" />}
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">Error loading data</h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    <p>{error}</p>
+                  </div>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          )}
 
-      {/* Filters */}
-      {showFilters && (
-        <div className="bg-white p-4 rounded-lg shadow space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ticker Symbol
-              </label>
-              <input
-                type="text"
-                value={filterTicker}
-                onChange={(e) => setFilterTicker(e.target.value.toUpperCase())}
-                placeholder="e.g., AAPL"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Execution Status
-              </label>
-              <select
-                value={filterExecuted === undefined ? '' : filterExecuted.toString()}
-                onChange={(e) => setFilterExecuted(e.target.value === '' ? undefined : e.target.value === 'true')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All</option>
-                <option value="true">Executed</option>
-                <option value="false">Not Executed</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Approval Status
-              </label>
-              <select
-                value={filterApproved === undefined ? '' : filterApproved.toString()}
-                onChange={(e) => setFilterApproved(e.target.value === '' ? undefined : e.target.value === 'true')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All</option>
-                <option value="true">Approved</option>
-                <option value="false">Not Approved</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
+          {currentAnalysis && (
+            <div className="lg:flex lg:flex-col lg:h-full lg:overflow-hidden">
+              <AnalysisDetails analysis={currentAnalysis} className="hidden lg:block mb-3 sm:mb-4 lg:flex-shrink-0" />
 
-      {/* Content */}
-      {loading && (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p className="mt-2 text-gray-600">Loading analyses...</p>
-        </div>
-      )}
+              <div className="hidden lg:grid grid-cols-2 gap-6 flex-1 min-h-0 analysis-grid">
+                <div className="flex flex-col min-h-0">
+                  <AnalysisContent
+                    analysis={currentAnalysis}
+                    onRemarksUpdate={handleRemarksUpdate}
+                    className="flex-1"
+                  />
+                </div>
+                <div className="flex flex-col min-h-0">
+                  <div className="bg-white rounded-lg shadow-sm flex flex-col h-full overflow-hidden">
+                    <div className="border-b border-gray-200 flex-shrink-0 overflow-x-auto chart-tabs">
+                      <nav className="flex -mb-px min-w-max">
+                        <button
+                          className={`py-3 px-4 sm:py-4 sm:px-6 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
+                            activeChartTab === '3month'
+                              ? 'border-blue-500 text-blue-600'
+                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                          }`}
+                          onClick={() => setActiveChartTab('3month')}
+                        >
+                          3 Month Chart
+                        </button>
+                        <button
+                          className={`py-3 px-4 sm:py-4 sm:px-6 border-b-2 font-medium text-sm whitespace-nowrap flex-shrink-0 ${
+                            activeChartTab === '1year'
+                              ? 'border-blue-500 text-blue-600'
+                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                          }`}
+                          onClick={() => setActiveChartTab('1year')}
+                        >
+                          1 Year Chart
+                        </button>
+                      </nav>
+                    </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800">{error}</p>
-        </div>
-      )}
-
-      {!loading && !error && analyses && (
-        <>
-          {/* Enhanced Analysis Cards */}
-          <div className="space-y-4">
-            {analyses.data.map((analysis) => {
-              const isExpanded = expandedAnalysis === analysis.Analysis_Id;
-              const statusColorClass = getStatusColor(analysis);
-              const statusLabel = getStatusLabel(analysis);
-
-              return (
-                <div key={analysis.Analysis_Id} className={`bg-white rounded-lg shadow-md border-2 ${statusColorClass} overflow-hidden transition-all`}>
-                  {/* Analysis Header */}
-                  <div
-                    className="p-4 sm:p-6 cursor-pointer hover:bg-gray-50"
-                    onClick={() => setExpandedAnalysis(isExpanded ? null : analysis.Analysis_Id)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
-                          {getStatusIcon(analysis)}
-                        </div>
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <h3 className="text-xl font-bold text-gray-900">{analysis.Ticker}</h3>
-                            {analysis.Trade_Type && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
-                                {getTradeTypeIcon(analysis.Trade_Type)}
-                                <span className="ml-1">{analysis.Trade_Type}</span>
-                              </span>
+                    <div className="p-4 flex-1 min-h-0 flex flex-col">
+                      <div className="flex-1 min-h-0 relative">
+                        {activeChartTab === '3month' && (
+                          <div className="h-full chart-image-container">
+                            {currentAnalysis["3_Month_Chart"] || currentAnalysis.Chart ? (
+                              <>
+                                <img
+                                  src={getImageUrl(currentAnalysis["3_Month_Chart"] || currentAnalysis.Chart!)}
+                                  alt="3 Month Chart"
+                                  className="w-full h-full rounded-lg chart-image"
+                                  onError={(e) => {
+                                    const target = e.currentTarget;
+                                    target.style.display = 'none';
+                                    const fallback = target.nextElementSibling;
+                                    if (fallback) {
+                                      (fallback as HTMLElement).style.display = 'block';
+                                    }
+                                  }}
+                                />
+                                <div className="hidden bg-gray-100 rounded-lg p-8 text-center text-gray-500">
+                                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  <p className="mt-2">3 Month Chart unavailable</p>
+                                </div>
+                              </>
+                            ) : (
+                              <ChartView symbol={currentAnalysis.Ticker} />
                             )}
                           </div>
-                          <p className="text-sm text-gray-500">{analysis.Analysis_Id}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="text-right">
-                          <span className={`px-3 py-1 inline-flex items-center text-sm font-semibold rounded-full ${statusColorClass}`}>
-                            {getStatusIcon(analysis)}
-                            <span className="ml-1.5">{statusLabel}</span>
-                          </span>
-                          {analysis.Date_time && (
-                            <p className="text-xs text-gray-500 mt-2">
-                              {new Date(analysis.Date_time).toLocaleString()}
-                            </p>
-                          )}
-                        </div>
-                        {isExpanded ? (
-                          <ChevronUp className="w-6 h-6 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="w-6 h-6 text-gray-400" />
+                        )}
+
+                        {activeChartTab === '1year' && (
+                          <div className="h-full chart-image-container">
+                            {currentAnalysis.Chart ? (
+                              <>
+                                <img
+                                  src={getImageUrl(currentAnalysis.Chart)}
+                                  alt="1 Year Chart"
+                                  className="w-full h-full rounded-lg chart-image"
+                                  onError={(e) => {
+                                    const target = e.currentTarget;
+                                    target.style.display = 'none';
+                                    const fallback = target.nextElementSibling;
+                                    if (fallback) {
+                                      (fallback as HTMLElement).style.display = 'block';
+                                    }
+                                  }}
+                                />
+                                <div className="hidden bg-gray-100 rounded-lg p-8 text-center text-gray-500">
+                                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  <p className="mt-2">1 Year Chart unavailable</p>
+                                </div>
+                              </>
+                            ) : (
+                              <ChartView symbol={currentAnalysis.Ticker} />
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
 
-                    {/* Analysis Summary */}
-                    {analysis.Analysis && (
-                      <div className="mt-4">
-                        <p className="text-sm text-gray-700 line-clamp-2">
-                          {analysis.Analysis}
-                        </p>
-                      </div>
-                    )}
+              <div className="lg:hidden">
+                <div className="pb-4">
+                  <AnalysisContent
+                    analysis={currentAnalysis}
+                    onRemarksUpdate={handleRemarksUpdate}
+                    className="min-h-[300px]"
+                  />
+                </div>
+
+                <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 mb-4">
+                  <div className="border-b border-gray-200 mb-3 sm:mb-4">
+                    <nav className="flex -mb-px">
+                      <button
+                        className={`py-2 px-3 sm:py-3 sm:px-4 border-b-2 font-medium text-sm transition-colors ${
+                          activeChartTab === '3month'
+                            ? 'border-blue-500 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                        onClick={() => setActiveChartTab('3month')}
+                      >
+                        3 Month
+                      </button>
+                      <button
+                        className={`py-2 px-3 sm:py-3 sm:px-4 border-b-2 font-medium text-sm transition-colors ${
+                          activeChartTab === '1year'
+                            ? 'border-blue-500 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                        onClick={() => setActiveChartTab('1year')}
+                      >
+                        1 Year
+                      </button>
+                    </nav>
                   </div>
 
-                  {/* Expandable Details */}
-                  {isExpanded && (
-                    <div className="border-t border-gray-200 bg-gray-50 p-4 sm:p-6 space-y-4">
-                      {analysis.Analysis && (
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 mb-2">Full Analysis</p>
-                          <div className="text-sm text-gray-900 bg-white p-4 rounded-lg border border-gray-200 whitespace-pre-wrap">
-                            {analysis.Analysis}
-                          </div>
-                        </div>
-                      )}
-
-                      {analysis.Decision && (
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 mb-2">Decision Data</p>
-                          <pre className="text-xs text-gray-900 bg-white p-4 rounded-lg border border-gray-200 overflow-x-auto">
-                            {JSON.stringify(analysis.Decision, null, 2)}
-                          </pre>
-                        </div>
-                      )}
-
-                      {analysis.Chart && (
-                        <div>
-                          <p className="text-sm font-medium text-gray-700 mb-2">Chart</p>
-                          <img
-                            src={analysis.Chart}
-                            alt="Analysis Chart"
-                            className="w-full rounded-lg border border-gray-200 shadow-sm"
-                          />
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
-                        <div>
-                          <p className="text-sm text-gray-500">Analysis ID</p>
-                          <p className="text-base font-semibold text-gray-900 font-mono">{analysis.Analysis_Id}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Date/Time</p>
-                          <p className="text-base font-semibold text-gray-900">
-                            {analysis.Date_time ? new Date(analysis.Date_time).toLocaleString() : 'N/A'}
-                          </p>
-                        </div>
-                        {analysis.Trade_Type && (
-                          <div>
-                            <p className="text-sm text-gray-500">Trade Type</p>
-                            <p className="text-base font-semibold text-gray-900">{analysis.Trade_Type}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  <div className="h-[300px] overflow-hidden">
+                    {activeChartTab === '3month' && (currentAnalysis["3_Month_Chart"] || currentAnalysis.Chart) && (
+                      <img
+                        src={getImageUrl(currentAnalysis["3_Month_Chart"] || currentAnalysis.Chart!)}
+                        alt="3 Month Chart"
+                        className="w-full h-full object-contain rounded-lg"
+                      />
+                    )}
+                    {activeChartTab === '1year' && currentAnalysis.Chart && (
+                      <img
+                        src={getImageUrl(currentAnalysis.Chart)}
+                        alt="1 Year Chart"
+                        className="w-full h-full object-contain rounded-lg"
+                      />
+                    )}
+                    {!currentAnalysis["3_Month_Chart"] && !currentAnalysis.Chart && (
+                      <ChartView symbol={currentAnalysis.Ticker} />
+                    )}
+                  </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            </div>
+          )}
 
-          {/* Pagination */}
-          <div className="bg-white px-4 py-3 flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 rounded-lg shadow gap-3">
-            <div className="text-sm text-gray-700 text-center sm:text-left">
-              Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to{' '}
-              <span className="font-medium">{Math.min(currentPage * pageSize, analyses.total)}</span> of{' '}
-              <span className="font-medium">{analyses.total}</span> results
+          {!loading && !currentAnalysis && analyses.length > 0 && (
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 text-blue-700">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm">Please select a symbol from the dropdown to view analysis details.</p>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white">
-                Page {currentPage}
-              </span>
-              <button
-                onClick={() => setCurrentPage(p => p + 1)}
-                disabled={currentPage * pageSize >= analyses.total}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-              >
-                Next
-              </button>
+          )}
+
+          {!loading && !currentAnalysis && analyses.length === 0 && selectedDate && !error && (
+            <div className="bg-gray-50 p-8 rounded-lg text-center">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No analyses found</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                No analyses available for {selectedDate.toLocaleDateString()}.
+              </p>
+              <p className="mt-1 text-sm text-gray-500">
+                Try selecting a different date.
+              </p>
             </div>
-          </div>
-        </>
-      )}
+          )}
+
+          {!loading && !selectedDate && (
+            <div className="bg-gray-50 p-8 rounded-lg text-center">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Select a date</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Please select a date to view analyses.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 
-from routers import analysis, trades, orders, positions
+from api.routers import analysis, trades, orders, positions
 
 # Configure logging
 logging.basicConfig(

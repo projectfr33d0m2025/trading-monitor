@@ -51,9 +51,11 @@ export default function PositionsPage() {
     }
   };
 
-  const formatCurrency = (value?: number) => {
+  const formatCurrency = (value?: number | string | null) => {
     if (value === undefined || value === null) return '$0.00';
-    return `$${value.toFixed(2)}`;
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(numValue)) return '$0.00';
+    return `$${numValue.toFixed(2)}`;
   };
 
   const formatPercent = (entry: number, current: number) => {

@@ -107,9 +107,11 @@ export default function OrdersPage() {
     return colors[type] || 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
-  const formatCurrency = (value?: number) => {
+  const formatCurrency = (value?: number | string | null) => {
     if (value === undefined || value === null) return 'N/A';
-    return `$${value.toFixed(2)}`;
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(numValue)) return 'N/A';
+    return `$${numValue.toFixed(2)}`;
   };
 
   const typeBreakdown = stats?.type_breakdown || {};

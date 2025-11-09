@@ -6,6 +6,8 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
 import sys
 import os
+import logging
+import traceback
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -14,6 +16,7 @@ from shared.database import TradingDB
 from shared.models import OrderExecution, OrderListResponse
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get("/", response_model=OrderListResponse)
@@ -83,6 +86,8 @@ async def get_orders(
         )
 
     except Exception as e:
+        logger.error(f"Error in orders endpoint: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
@@ -106,6 +111,8 @@ async def get_order(order_id: int):
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Error fetching order: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
@@ -151,6 +158,8 @@ async def get_orders_by_trade(
         )
 
     except Exception as e:
+        logger.error(f"Error in orders endpoint: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
@@ -198,6 +207,8 @@ async def get_order_stats():
         }
 
     except Exception as e:
+        logger.error(f"Error in orders endpoint: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()

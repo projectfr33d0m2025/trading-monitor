@@ -6,6 +6,8 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
 import sys
 import os
+import logging
+import traceback
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -14,6 +16,7 @@ from shared.database import TradingDB
 from shared.models import PositionTracking, PositionListResponse
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get("/", response_model=PositionListResponse)
@@ -52,7 +55,7 @@ async def get_positions(
             'position_tracking',
             where_clause=where_clause,
             params=tuple(params) if params else None,
-            order_by='last_updated DESC',
+            order_by='updated_at DESC',
             limit=page_size,
             offset=offset
         )
@@ -68,6 +71,8 @@ async def get_positions(
         )
 
     except Exception as e:
+        logger.error(f"Error in positions endpoint: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
@@ -91,6 +96,8 @@ async def get_position(position_id: int):
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Error fetching position: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
@@ -119,7 +126,7 @@ async def get_pnl_summary():
         symbol_query = """
             SELECT
                 symbol,
-                qty,
+                qty_,
                 avg_entry_price,
                 current_price,
                 market_value,
@@ -135,6 +142,8 @@ async def get_pnl_summary():
         }
 
     except Exception as e:
+        logger.error(f"Error in positions endpoint: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()

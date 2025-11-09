@@ -10,9 +10,9 @@ from decimal import Decimal
 
 class AnalysisDecision(BaseModel):
     """Analysis Decision from n8n workflow"""
-    Analysis_Id: str
+    Analysis_Id: Optional[str] = None
     Date_time: Optional[datetime] = None
-    Ticker: str
+    Ticker: Optional[str] = None
     Chart: Optional[str] = None
     Analysis_Prompt: Optional[str] = None
     three_Month_Chart: Optional[str] = Field(None, alias="3_Month_Chart")
@@ -48,7 +48,7 @@ class TradeJournal(BaseModel):
     actual_entry: Optional[Decimal] = None
     actual_qty: Optional[int] = None
     current_stop_loss: Optional[Decimal] = None
-    days_open: int = 0
+    days_open: Optional[int] = 0
     last_review_date: Optional[date] = None
     exit_date: Optional[date] = None
     exit_price: Optional[Decimal] = None
@@ -89,7 +89,7 @@ class PositionTracking(BaseModel):
     id: int
     trade_journal_id: int
     symbol: str
-    qty: int
+    qty_: int  # NocoDB renamed qty to qty_
     avg_entry_price: Decimal
     current_price: Decimal
     market_value: Decimal
@@ -97,7 +97,7 @@ class PositionTracking(BaseModel):
     unrealized_pnl: Decimal = Decimal('0')
     stop_loss_order_id: Optional[str] = None
     take_profit_order_id: Optional[str] = None
-    last_updated: Optional[datetime] = None
+    updated_at: Optional[datetime] = None  # NocoDB uses updated_at instead of last_updated
 
     class Config:
         from_attributes = True

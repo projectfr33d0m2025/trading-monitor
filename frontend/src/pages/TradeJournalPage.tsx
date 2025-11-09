@@ -92,9 +92,11 @@ export default function TradeJournalPage() {
     return <Package className="w-4 h-4" />;
   };
 
-  const formatCurrency = (value?: number) => {
+  const formatCurrency = (value?: number | string | null) => {
     if (value === undefined || value === null) return 'N/A';
-    return `$${value.toFixed(2)}`;
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(numValue)) return 'N/A';
+    return `$${numValue.toFixed(2)}`;
   };
 
   const formatPnL = (pnl?: number) => {
