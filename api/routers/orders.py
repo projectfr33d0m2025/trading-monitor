@@ -154,3 +154,50 @@ async def get_orders_by_trade(
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
+
+
+@router.get("/stats/summary")
+async def get_order_stats():
+    """
+    Get order statistics including counts by type and status
+    """
+    db = TradingDB()
+
+    try:
+        # Get total orders
+        total_query = "SELECT COUNT(*) as count FROM order_execution"
+        total_result = db.execute_query(total_query)
+        total_orders = total_result[0]['count'] if total_result else 0
+
+        # Get breakdown by order type
+        type_query = """
+            SELECT
+                order_type,
+                COUNT(*) as count
+            FROM order_execution
+            GROUP BY order_type
+        """
+        type_results = db.execute_query(type_query)
+        type_breakdown = {row['order_type']: row['count'] for row in type_results}
+
+        # Get breakdown by order status
+        status_query = """
+            SELECT
+                order_status,
+                COUNT(*) as count
+            FROM order_execution
+            GROUP BY order_status
+        """
+        status_results = db.execute_query(status_query)
+        status_breakdown = {row['order_status']: row['count'] for row in status_results}
+
+        return {
+            'total_orders': total_orders,
+            'type_breakdown': type_breakdown,
+            'status_breakdown': status_breakdown
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
