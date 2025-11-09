@@ -3,10 +3,12 @@ Alpaca API Helper Module
 Provides helper functions for Alpaca API interactions
 """
 import os
+import sys
 import logging
 from alpaca.trading.client import TradingClient
 from alpaca.data.historical import StockHistoricalDataClient
-from config import ALPACA_API_KEY, ALPACA_SECRET_KEY, ALPACA_PAPER
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from shared.config import ALPACA_API_KEY, ALPACA_SECRET_KEY, ALPACA_PAPER
 
 logger = logging.getLogger(__name__)
 

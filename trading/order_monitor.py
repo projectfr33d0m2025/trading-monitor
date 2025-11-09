@@ -9,7 +9,9 @@ from datetime import datetime
 from dotenv import load_dotenv
 from alpaca.trading.requests import StopOrderRequest, LimitOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce
-from db_layer import TradingDB
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from shared.database import TradingDB
 from alpaca_client import get_trading_client, handle_alpaca_error
 import logging
 

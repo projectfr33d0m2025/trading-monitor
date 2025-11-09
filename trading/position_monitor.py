@@ -7,7 +7,8 @@ import os
 import sys
 from dotenv import load_dotenv
 from alpaca.data.requests import StockLatestQuoteRequest
-from db_layer import TradingDB
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from shared.database import TradingDB
 from alpaca_client import get_trading_client, get_data_client, handle_alpaca_error
 import logging
 

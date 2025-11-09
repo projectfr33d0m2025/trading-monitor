@@ -3,7 +3,13 @@ Unit tests for database layer
 Tests basic CRUD operations and schema creation
 """
 import pytest
-from db_layer import TradingDB
+import sys
+import os
+
+# Add shared directory to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+from shared.database import TradingDB
 
 
 def test_database_connection(test_db):
