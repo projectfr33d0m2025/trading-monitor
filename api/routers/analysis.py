@@ -151,3 +151,59 @@ async def get_pending_approvals(
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
+
+
+@router.get("/stats/summary")
+async def get_analysis_stats():
+    """
+    Get analysis statistics including counts by status
+    """
+    db = TradingDB()
+
+    try:
+        # Get total analyses
+        total_query = "SELECT COUNT(*) as count FROM analysis_decision"
+        total_result = db.execute_query(total_query)
+        total_analyses = total_result[0]['count'] if total_result else 0
+
+        # Get pending count (not approved and not executed)
+        pending_query = 'SELECT COUNT(*) as count FROM analysis_decision WHERE "Approve" = false AND executed = false'
+        pending_result = db.execute_query(pending_query)
+        pending_count = pending_result[0]['count'] if pending_result else 0
+
+        # Get approved count (approved but not executed)
+        approved_query = 'SELECT COUNT(*) as count FROM analysis_decision WHERE "Approve" = true AND executed = false'
+        approved_result = db.execute_query(approved_query)
+        approved_count = approved_result[0]['count'] if approved_result else 0
+
+        # Get executed count
+        executed_query = 'SELECT COUNT(*) as count FROM analysis_decision WHERE executed = true'
+        executed_result = db.execute_query(executed_query)
+        executed_count = executed_result[0]['count'] if executed_result else 0
+
+        # Get breakdown by trade type
+        type_query = """
+            SELECT
+                "Trade_Type",
+                COUNT(*) as count
+            FROM analysis_decision
+            WHERE "Trade_Type" IS NOT NULL
+            GROUP BY "Trade_Type"
+        """
+        type_results = db.execute_query(type_query)
+        type_breakdown = {row['Trade_Type']: row['count'] for row in type_results}
+
+        return {
+            'total_analyses': total_analyses,
+            'status_breakdown': {
+                'PENDING': pending_count,
+                'APPROVED': approved_count,
+                'EXECUTED': executed_count
+            },
+            'type_breakdown': type_breakdown
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
