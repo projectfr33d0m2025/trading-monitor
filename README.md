@@ -136,30 +136,43 @@ trading-monitor/
   - Recent active trades
 
 - **📈 Analysis Page**
-  - View AI-generated trading analysis
+  - View AI-generated trading analysis with gradient summary cards
+  - Status breakdown (Pending, Approved, Executed)
   - Filter by ticker, execution status, approval status
-  - Detailed analysis view with charts
-  - Pagination support
+  - Progressive disclosure with expandable cards
+  - Full analysis text, decision JSON, and chart visualization
+  - Icon-first design with status indicators
+  - Responsive mobile/desktop views
 
 - **📋 Trade Journal**
   - Complete trade lifecycle tracking
+  - Gradient summary cards showing status breakdown
   - Filter by symbol, status, trade style
-  - P&L tracking for closed trades
+  - P&L tracking with color-coded indicators
   - Days open counter
+  - Progressive disclosure with expandable trade details
+  - Trade style badges (Swing, Trend)
+  - Icon-first design with status icons
   - Responsive mobile/desktop views
 
 - **🛒 Order Execution**
-  - Monitor all order types (Entry, Stop Loss, Take Profit)
+  - Monitor all order types with gradient summary cards
+  - Order type breakdown (Entry, Stop Loss, Take Profit)
+  - Order status breakdown (Pending, Filled, Cancelled)
   - Filter by order type and status
-  - Fill price tracking
-  - Order status indicators
+  - Progressive disclosure with expandable order details
+  - Fill price tracking with detailed timestamps
+  - Icon-first design (ShoppingCart, StopCircle, Trophy)
+  - Responsive mobile/desktop views
 
 - **💰 Position Tracking**
-  - Real-time position values
-  - Unrealized P&L calculation
-  - Market value tracking
-  - Cost basis comparison
-  - Summary statistics
+  - Real-time position values with gradient summary cards
+  - Unrealized P&L calculation with color-coded indicators
+  - Market value and cost basis tracking
+  - Progressive disclosure with related orders
+  - Lazy loading of order details on expand
+  - Icon-first design with status indicators
+  - Responsive mobile/desktop views
 
 ### API Endpoints
 
@@ -167,22 +180,24 @@ trading-monitor/
 - `GET /api/analysis` - List all analyses (with pagination & filters)
 - `GET /api/analysis/{id}` - Get single analysis
 - `GET /api/analysis/pending-approvals/list` - Get pending approvals
+- `GET /api/analysis/stats/summary` - Get analysis statistics (status & type breakdown)
 
 #### Trade Journal
 - `GET /api/trades` - List all trades (with pagination & filters)
 - `GET /api/trades/{id}` - Get single trade
 - `GET /api/trades/active/list` - Get active trades
-- `GET /api/trades/stats/summary` - Get trade statistics
+- `GET /api/trades/stats/summary` - Get trade statistics (status breakdown & P&L)
 
 #### Order Execution
 - `GET /api/orders` - List all orders (with pagination & filters)
 - `GET /api/orders/{id}` - Get single order
 - `GET /api/orders/trade/{trade_id}/list` - Get orders for a trade
+- `GET /api/orders/stats/summary` - Get order statistics (type & status breakdown)
 
 #### Position Tracking
 - `GET /api/positions` - List all positions (with pagination & filters)
 - `GET /api/positions/{id}` - Get single position
-- `GET /api/positions/pnl/summary` - Get P&L summary
+- `GET /api/positions/pnl/summary` - Get P&L summary with aggregations
 
 ## 🔧 Configuration
 
