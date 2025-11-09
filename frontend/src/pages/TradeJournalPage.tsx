@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Filter, ChevronDown, ChevronUp, TrendingUp, TrendingDown } from 'lucide-react';
+import { Filter, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Zap, FileText, XCircle, Clock, CheckCircle, Package } from 'lucide-react';
 import { api } from '../lib/api';
 import type { TradeJournal, PaginatedResponse } from '../lib/types';
 
 export default function TradeJournalPage() {
   const [trades, setTrades] = useState<PaginatedResponse<TradeJournal> | null>(null);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedTrade, setExpandedTrade] = useState<number | null>(null);
 
   // Filters
   const [filterSymbol, setFilterSymbol] = useState('');
@@ -18,21 +20,25 @@ export default function TradeJournalPage() {
   const pageSize = 20;
 
   useEffect(() => {
-    fetchTrades();
+    fetchData();
   }, [currentPage, filterSymbol, filterStatus]);
 
-  const fetchTrades = async () => {
+  const fetchData = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const data = await api.getTrades({
-        page: currentPage,
-        page_size: pageSize,
-        symbol: filterSymbol || undefined,
-        status: filterStatus || undefined,
-      });
-      setTrades(data);
+      const [tradesData, statsData] = await Promise.all([
+        api.getTrades({
+          page: currentPage,
+          page_size: pageSize,
+          symbol: filterSymbol || undefined,
+          status: filterStatus || undefined,
+        }),
+        api.getTradeStats(),
+      ]);
+      setTrades(tradesData);
+      setStats(statsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch trades');
     } finally {
@@ -40,14 +46,50 @@ export default function TradeJournalPage() {
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'ORDERED':
+        return <Clock className="w-5 h-5" />;
+      case 'POSITION':
+        return <Package className="w-5 h-5" />;
+      case 'CLOSED':
+        return <CheckCircle className="w-5 h-5" />;
+      case 'CANCELLED':
+        return <XCircle className="w-5 h-5" />;
+      default:
+        return <FileText className="w-5 h-5" />;
+    }
+  };
+
+  const getStatusGradient = (status: string) => {
+    switch (status) {
+      case 'ORDERED':
+        return 'from-blue-500 to-blue-600';
+      case 'POSITION':
+        return 'from-green-500 to-green-600';
+      case 'CLOSED':
+        return 'from-gray-500 to-gray-600';
+      case 'CANCELLED':
+        return 'from-red-500 to-red-600';
+      default:
+        return 'from-gray-400 to-gray-500';
+    }
+  };
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      ORDERED: 'bg-blue-100 text-blue-800',
-      POSITION: 'bg-green-100 text-green-800',
-      CLOSED: 'bg-gray-100 text-gray-800',
-      CANCELLED: 'bg-red-100 text-red-800',
+      ORDERED: 'bg-blue-100 text-blue-800 border-blue-200',
+      POSITION: 'bg-green-100 text-green-800 border-green-200',
+      CLOSED: 'bg-gray-100 text-gray-800 border-gray-200',
+      CANCELLED: 'bg-red-100 text-red-800 border-red-200',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
+  const getTradeStyleIcon = (style?: string) => {
+    if (style === 'SWING') return <Zap className="w-4 h-4" />;
+    if (style === 'TREND') return <TrendingUp className="w-4 h-4" />;
+    return <Package className="w-4 h-4" />;
   };
 
   const formatCurrency = (value?: number) => {
@@ -59,12 +101,14 @@ export default function TradeJournalPage() {
     if (pnl === undefined || pnl === null) return null;
     const isPositive = pnl >= 0;
     return (
-      <span className={`inline-flex items-center ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+      <span className={`inline-flex items-center font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
         {isPositive ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
         {formatCurrency(pnl)}
       </span>
     );
   };
+
+  const statusCounts = stats?.status_breakdown || {};
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -85,6 +129,25 @@ export default function TradeJournalPage() {
           {showFilters ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
         </button>
       </div>
+
+      {/* Summary Cards */}
+      {!loading && stats && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {Object.entries(statusCounts).map(([status, count]: [string, any]) => (
+            <div key={status} className={`bg-gradient-to-br ${getStatusGradient(status)} rounded-lg shadow-lg p-6 text-white`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium opacity-90 uppercase">{status}</p>
+                  <p className="text-3xl font-bold mt-1">{count}</p>
+                </div>
+                <div className="opacity-30">
+                  {getStatusIcon(status)}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Filters */}
       {showFilters && (
@@ -138,104 +201,138 @@ export default function TradeJournalPage() {
 
       {!loading && !error && trades && (
         <>
-          {/* Desktop Table */}
-          <div className="hidden md:block bg-white shadow rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Trade ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Symbol
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Entry
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Qty
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Days Open
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      P&L
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {trades.data.map((trade) => (
-                    <tr key={trade.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {trade.trade_id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {trade.symbol}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(trade.status)}`}>
-                          {trade.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatCurrency(trade.actual_entry || trade.planned_entry)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {trade.actual_qty || trade.planned_qty || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {trade.days_open}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        {formatPnL(trade.actual_pnl) || '-'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {/* Enhanced Trade Cards */}
+          <div className="space-y-4">
+            {trades.data.map((trade) => {
+              const isExpanded = expandedTrade === trade.id;
+              const statusColorClass = getStatusColor(trade.status);
 
-          {/* Mobile Cards */}
-          <div className="md:hidden space-y-4">
-            {trades.data.map((trade) => (
-              <div key={trade.id} className="bg-white shadow rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold text-gray-900">{trade.symbol}</span>
-                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(trade.status)}`}>
-                    {trade.status}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <p className="text-gray-500">Trade ID</p>
-                    <p className="font-medium text-gray-900">{trade.trade_id}</p>
+              return (
+                <div key={trade.id} className={`bg-white rounded-lg shadow-md border-2 ${statusColorClass} overflow-hidden transition-all`}>
+                  {/* Trade Header */}
+                  <div
+                    className="p-4 sm:p-6 cursor-pointer hover:bg-gray-50"
+                    onClick={() => setExpandedTrade(isExpanded ? null : trade.id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                          {getStatusIcon(trade.status)}
+                        </div>
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <h3 className="text-xl font-bold text-gray-900">{trade.symbol}</h3>
+                            {trade.trade_style && (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                                {getTradeStyleIcon(trade.trade_style)}
+                                <span className="ml-1">{trade.trade_style}</span>
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-500">{trade.trade_id}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="text-right">
+                          <span className={`px-3 py-1 inline-flex items-center text-sm font-semibold rounded-full ${statusColorClass}`}>
+                            {getStatusIcon(trade.status)}
+                            <span className="ml-1.5">{trade.status}</span>
+                          </span>
+                          {trade.actual_pnl !== null && trade.actual_pnl !== undefined && (
+                            <div className="mt-2">
+                              {formatPnL(trade.actual_pnl)}
+                            </div>
+                          )}
+                        </div>
+                        {isExpanded ? (
+                          <ChevronUp className="w-6 h-6 text-gray-400" />
+                        ) : (
+                          <ChevronDown className="w-6 h-6 text-gray-400" />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Trade Summary */}
+                    <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Entry Price</p>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {formatCurrency(trade.actual_entry || trade.planned_entry)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Quantity</p>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {trade.actual_qty || trade.planned_qty || 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Days Open</p>
+                        <p className="text-lg font-semibold text-gray-900">{trade.days_open}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Stop Loss</p>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {formatCurrency(trade.current_stop_loss || trade.planned_stop_loss)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-500">Entry Price</p>
-                    <p className="font-medium text-gray-900">{formatCurrency(trade.actual_entry || trade.planned_entry)}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Quantity</p>
-                    <p className="font-medium text-gray-900">{trade.actual_qty || trade.planned_qty || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Days Open</p>
-                    <p className="font-medium text-gray-900">{trade.days_open}</p>
-                  </div>
-                  {trade.actual_pnl !== null && trade.actual_pnl !== undefined && (
-                    <div className="col-span-2">
-                      <p className="text-gray-500">P&L</p>
-                      <p className="font-medium">{formatPnL(trade.actual_pnl)}</p>
+
+                  {/* Expandable Details */}
+                  {isExpanded && (
+                    <div className="border-t border-gray-200 bg-gray-50 p-4 sm:p-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {trade.planned_take_profit && (
+                          <div>
+                            <p className="text-sm text-gray-500">Take Profit Target</p>
+                            <p className="text-base font-semibold text-gray-900">
+                              {formatCurrency(trade.planned_take_profit)}
+                            </p>
+                          </div>
+                        )}
+                        {trade.exit_price && (
+                          <div>
+                            <p className="text-sm text-gray-500">Exit Price</p>
+                            <p className="text-base font-semibold text-gray-900">
+                              {formatCurrency(trade.exit_price)}
+                            </p>
+                          </div>
+                        )}
+                        {trade.exit_reason && (
+                          <div>
+                            <p className="text-sm text-gray-500">Exit Reason</p>
+                            <p className="text-base font-semibold text-gray-900">{trade.exit_reason}</p>
+                          </div>
+                        )}
+                        {trade.pattern && (
+                          <div>
+                            <p className="text-sm text-gray-500">Pattern</p>
+                            <p className="text-base font-semibold text-gray-900">{trade.pattern}</p>
+                          </div>
+                        )}
+                        {trade.created_at && (
+                          <div>
+                            <p className="text-sm text-gray-500">Created</p>
+                            <p className="text-base font-semibold text-gray-900">
+                              {new Date(trade.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        )}
+                        {trade.exit_date && (
+                          <div>
+                            <p className="text-sm text-gray-500">Exit Date</p>
+                            <p className="text-base font-semibold text-gray-900">
+                              {new Date(trade.exit_date).toLocaleDateString()}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Pagination */}
