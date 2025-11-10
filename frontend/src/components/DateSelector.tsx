@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 
 interface DateSelectorProps {
+  value?: Date;
   onDateSelect: (date: Date) => void;
   inline?: boolean;
 }
 
-export function DateSelector({ onDateSelect, inline = false }: DateSelectorProps) {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+export function DateSelector({ value, onDateSelect, inline = false }: DateSelectorProps) {
+  const [selectedDate, setSelectedDate] = useState<Date>(value || new Date());
+
+  // Sync internal state when external value changes
+  useEffect(() => {
+    if (value) {
+      setSelectedDate(value);
+    }
+  }, [value]);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = new Date(e.target.value);

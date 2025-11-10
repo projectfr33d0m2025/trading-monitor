@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Filter, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Zap, Clock, CheckCircle, XCircle, Package, ShoppingCart, StopCircle, Trophy } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Filter, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Zap, Clock, CheckCircle, XCircle, Package, ShoppingCart, StopCircle, Trophy, FileText } from 'lucide-react';
 import { api } from '../lib/api';
 import type { TradeJournal, PaginatedResponse, OrderExecution, PositionTracking } from '../lib/types';
 
@@ -9,11 +10,14 @@ interface TradeWithDetails extends TradeJournal {
 }
 
 export default function TradeJournalPage() {
+  const [searchParams] = useSearchParams();
   const [trades, setTrades] = useState<PaginatedResponse<TradeWithDetails> | null>(null);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedTrade, setExpandedTrade] = useState<number | null>(null);
+  const expandedTradeRef = useRef<HTMLDivElement | null>(null);
+  const hasProcessedUrlParam = useRef(false);
 
   // Filters
   const [filterSymbol, setFilterSymbol] = useState('');
@@ -28,6 +32,34 @@ export default function TradeJournalPage() {
   useEffect(() => {
     fetchData();
   }, [currentPage, filterSymbol, filterStatus, filterDateRange]);
+
+  // Auto-expand trade from URL parameter (only once on initial load)
+  useEffect(() => {
+    const tradeIdParam = searchParams.get('tradeId');
+
+    // Only process if we haven't already processed a URL param
+    if (tradeIdParam && trades && !loading && !hasProcessedUrlParam.current) {
+      const tradeId = parseInt(tradeIdParam);
+      const trade = trades.data.find(t => t.id === tradeId);
+      if (trade) {
+        // Mark as processed to prevent re-running
+        hasProcessedUrlParam.current = true;
+
+        // Auto-expand the trade
+        toggleTrade(trade.id, trade.id, trade.status);
+
+        // Scroll to the expanded trade after a short delay to ensure DOM is updated
+        setTimeout(() => {
+          if (expandedTradeRef.current) {
+            expandedTradeRef.current.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center'
+            });
+          }
+        }, 300);
+      }
+    }
+  }, [searchParams, trades, loading]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -345,7 +377,11 @@ export default function TradeJournalPage() {
               const orders = trade.orders || [];
 
               return (
-                <div key={trade.id} className={`bg-white rounded-lg shadow-md border-2 ${statusColorClass} overflow-hidden transition-all`}>
+                <div
+                  key={trade.id}
+                  ref={isExpanded ? expandedTradeRef : null}
+                  className={`bg-white rounded-lg shadow-md border-2 ${statusColorClass} overflow-hidden transition-all`}
+                >
                   {/* Trade Header */}
                   <div
                     className="p-4 sm:p-6 cursor-pointer hover:bg-gray-50"
@@ -484,6 +520,19 @@ export default function TradeJournalPage() {
                   {/* Expandable Details */}
                   {isExpanded && (
                     <div className="border-t border-gray-200 bg-gray-50 p-4 sm:p-6">
+                      {/* View Analysis Link */}
+                      {trade.initial_analysis_id && (
+                        <div className="mb-6">
+                          <Link
+                            to={`/analysis?analysisId=${trade.initial_analysis_id}`}
+                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            View Analysis
+                          </Link>
+                        </div>
+                      )}
+
                       {/* Position Details for POSITION status */}
                       {trade.status === 'POSITION' && trade.position && (
                         <div className="mb-6">

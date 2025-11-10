@@ -13,26 +13,16 @@ export function formatDateForAPI(date: Date): string {
 
 /**
  * Fetch analyses by date
- * Filters all analyses to only those matching the selected date
+ * Uses backend date filtering for efficient querying
  */
 export async function fetchAnalysesByDate(dateString: string): Promise<AnalysisDecision[]> {
-  // Get all analyses (you may want to add pagination handling here)
-  const response = await api.getAnalyses({ page_size: 100 });
-
-  // Filter by date
-  const targetDate = new Date(dateString);
-  const analyses = response.data.filter(analysis => {
-    if (!analysis.Date_time && !analysis.Date) return false;
-
-    const analysisDate = new Date(analysis.Date_time || analysis.Date!);
-    return (
-      analysisDate.getFullYear() === targetDate.getFullYear() &&
-      analysisDate.getMonth() === targetDate.getMonth() &&
-      analysisDate.getDate() === targetDate.getDate()
-    );
+  // Use backend date filtering to get only analyses for the specified date
+  const response = await api.getAnalyses({
+    date: dateString,
+    page_size: 100 // Keep reasonable limit per page for UI performance
   });
 
-  return analyses;
+  return response.data;
 }
 
 /**

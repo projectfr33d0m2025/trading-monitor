@@ -26,6 +26,7 @@ async def get_analyses(
     ticker: Optional[str] = Query(None, description="Filter by ticker symbol"),
     executed: Optional[bool] = Query(None, description="Filter by execution status"),
     approved: Optional[bool] = Query(None, description="Filter by approval status"),
+    date: Optional[str] = Query(None, description="Filter by date (YYYY-MM-DD format)"),
 ):
     """
     Get list of analysis decisions with pagination and filters
@@ -48,6 +49,11 @@ async def get_analyses(
         if approved is not None:
             where_conditions.append('"Approve" = %s')
             params.append(approved)
+
+        if date:
+            # Filter by date - cast Date_time to date for comparison
+            where_conditions.append('DATE("Date_time") = %s')
+            params.append(date)
 
         where_clause = " AND ".join(where_conditions) if where_conditions else None
 

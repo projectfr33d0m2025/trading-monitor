@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DateSelector } from '../components/DateSelector';
 import { SymbolDropdown } from '../components/SymbolDropdown';
 import { AnalysisDetails } from '../components/AnalysisDetails';
 import { AnalysisContent } from '../components/AnalysisContent';
 import { ChartView } from '../components/ChartView';
 import type { AnalysisDecision } from '../lib/types';
+import { api } from '../lib/api';
 import { fetchAnalysesByDate, formatDateForAPI, getImageUrl } from '../utils/api';
 import { ChevronDown, ChevronUp, Filter } from 'lucide-react';
 import '../styles/analysis.css';
 
 export default function AnalysisPage() {
+  const [searchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [analyses, setAnalyses] = useState<AnalysisDecision[]>([]);
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
@@ -65,10 +68,84 @@ export default function AnalysisPage() {
   };
 
   useEffect(() => {
-    if (!selectedDate) {
-      const today = new Date();
-      handleDateSelect(today);
-    }
+    const initializePage = async () => {
+      // Check for URL parameters
+      const urlAnalysisId = searchParams.get('analysisId');
+      const urlSymbol = searchParams.get('symbol');
+      const urlDate = searchParams.get('date');
+
+      // Priority 1: Direct analysis ID lookup
+      if (urlAnalysisId) {
+        setLoading(true);
+        setError(null);
+
+        try {
+          const analysis = await api.getAnalysis(urlAnalysisId);
+          setCurrentAnalysis(analysis);
+
+          // Extract and set the date from the analysis
+          const analysisDate = new Date(analysis.Date_time || analysis.Date || new Date());
+          setSelectedDate(analysisDate);
+
+          // Fetch all analyses for that date to populate the dropdown
+          const formattedDate = formatDateForAPI(analysisDate);
+          const fetchedAnalyses = await fetchAnalysesByDate(formattedDate);
+          setAnalyses(fetchedAnalyses);
+
+          // Set the selected symbol (use full ticker format to match dropdown)
+          setSelectedSymbol(analysis.Ticker);
+        } catch (err) {
+          console.error('Error fetching analysis by ID:', err);
+          setError(err instanceof Error ? err.message : 'Failed to fetch analysis');
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+
+      // Priority 2: Date + Symbol lookup (legacy/manual navigation)
+      if (urlDate) {
+        // Parse the date from URL (format: YYYY-MM-DD)
+        const date = new Date(urlDate);
+        if (!isNaN(date.getTime())) {
+          setSelectedDate(date);
+          setLoading(true);
+          setError(null);
+
+          try {
+            const formattedDate = formatDateForAPI(date);
+            const fetchedAnalyses = await fetchAnalysesByDate(formattedDate);
+            setAnalyses(fetchedAnalyses);
+
+            // If symbol is also provided, auto-select it (normalize symbol comparison)
+            if (urlSymbol) {
+              const analysis = fetchedAnalyses.find(a =>
+                a.Ticker.split(':')[0] === urlSymbol.split(':')[0]
+              );
+              if (analysis) {
+                setSelectedSymbol(analysis.Ticker);
+                setCurrentAnalysis(analysis);
+              }
+            }
+          } catch (err) {
+            console.error('Error fetching analyses:', err);
+            setError(err instanceof Error ? err.message : 'Failed to fetch analyses');
+            setAnalyses([]);
+          } finally {
+            setLoading(false);
+          }
+          return;
+        }
+      }
+
+      // Fallback to today if no valid URL params
+      if (!selectedDate) {
+        const today = new Date();
+        handleDateSelect(today);
+      }
+    };
+
+    initializePage();
   }, []);
 
   return (
@@ -89,7 +166,11 @@ export default function AnalysisPage() {
 
           <div className={`${filtersCollapsed ? 'hidden' : 'flex'} sm:flex flex-row gap-2 sm:gap-4 analysis-selectors w-full transition-all duration-200`}>
             <div className="flex-1 min-w-0">
-              <DateSelector onDateSelect={handleDateSelect} inline />
+              <DateSelector
+                value={selectedDate || undefined}
+                onDateSelect={handleDateSelect}
+                inline
+              />
             </div>
             <div className="flex-1 min-w-0">
               <SymbolDropdown
@@ -132,7 +213,7 @@ export default function AnalysisPage() {
 
           {currentAnalysis && (
             <div className="lg:flex lg:flex-col lg:h-full lg:overflow-hidden">
-              <AnalysisDetails analysis={currentAnalysis} className="hidden lg:block mb-3 sm:mb-4 lg:flex-shrink-0" />
+              <AnalysisDetails analysis={currentAnalysis} className="mb-3 sm:mb-4 lg:flex-shrink-0" />
 
               <div className="hidden lg:grid grid-cols-2 gap-6 flex-1 min-h-0 analysis-grid">
                 <div className="flex flex-col min-h-0">

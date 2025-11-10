@@ -1,5 +1,6 @@
 import React from 'react';
-import { Tag, Clock, Briefcase } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Tag, Clock, Briefcase, FileText } from 'lucide-react';
 import type { AnalysisDecision } from '../lib/types';
 
 interface AnalysisDetailsProps {
@@ -8,10 +9,12 @@ interface AnalysisDetailsProps {
 }
 
 export function AnalysisDetails({ analysis, className = '' }: AnalysisDetailsProps) {
+  const hasTradeJournal = !!analysis.existing_trade_journal_id;
+
   return (
     <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}>
       <div className="p-4 sm:p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${hasTradeJournal ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-4 sm:gap-6`}>
           {/* Analysis ID */}
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0 mt-1">
@@ -81,6 +84,26 @@ export function AnalysisDetails({ analysis, className = '' }: AnalysisDetailsPro
               </p>
             </div>
           </div>
+
+          {/* Trade Journal Link */}
+          {hasTradeJournal && (
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-1">
+                <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-indigo-600" />
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-500 mb-1">Trade Journal</p>
+                <Link
+                  to={`/trades?tradeId=${analysis.existing_trade_journal_id}`}
+                  className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 hover:underline"
+                >
+                  View Trade #{analysis.existing_trade_journal_id}
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
