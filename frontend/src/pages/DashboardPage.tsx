@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart3, FileText, ShoppingCart, TrendingUp, TrendingDown, Clock, CheckCircle } from 'lucide-react';
+import { BarChart3, FileText, TrendingUp, TrendingDown, Clock, CheckCircle } from 'lucide-react';
 import { api } from '../lib/api';
 
 export default function DashboardPage() {
@@ -112,22 +112,17 @@ export default function DashboardPage() {
         </Link>
 
         {/* Active Positions */}
-        <Link to="/positions" className="block">
-          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <TrendingUp className="w-8 h-8 text-purple-500" />
-              </div>
-              <div className="ml-4 flex-1">
-                <p className="text-sm font-medium text-gray-500">Active Positions</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.totalPositions}</p>
-              </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <TrendingUp className="w-8 h-8 text-purple-500" />
             </div>
-            <div className="mt-4">
-              <span className="text-sm text-blue-600 hover:text-blue-800">View all →</span>
+            <div className="ml-4 flex-1">
+              <p className="text-sm font-medium text-gray-500">Active Positions</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats.totalPositions}</p>
             </div>
           </div>
-        </Link>
+        </div>
 
         {/* Unrealized P&L */}
         <div className="bg-white rounded-lg shadow p-6">
@@ -225,7 +220,7 @@ export default function DashboardPage() {
       )}
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Link
           to="/analysis"
           className="flex items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
@@ -239,20 +234,6 @@ export default function DashboardPage() {
         >
           <FileText className="w-6 h-6 text-green-600 mr-3" />
           <span className="text-sm font-medium text-green-900">Trade Journal</span>
-        </Link>
-        <Link
-          to="/orders"
-          className="flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
-        >
-          <ShoppingCart className="w-6 h-6 text-purple-600 mr-3" />
-          <span className="text-sm font-medium text-purple-900">View Orders</span>
-        </Link>
-        <Link
-          to="/positions"
-          className="flex items-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"
-        >
-          <TrendingUp className="w-6 h-6 text-yellow-600 mr-3" />
-          <span className="text-sm font-medium text-yellow-900">Track Positions</span>
         </Link>
       </div>
     </div>
