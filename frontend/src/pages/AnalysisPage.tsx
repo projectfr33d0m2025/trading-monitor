@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DateSelector } from '../components/DateSelector';
 import { SymbolDropdown } from '../components/SymbolDropdown';

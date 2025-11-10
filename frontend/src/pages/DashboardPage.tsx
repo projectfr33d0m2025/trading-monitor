@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart3, FileText, TrendingUp, TrendingDown, Clock, CheckCircle } from 'lucide-react';
+import { BarChart3, FileText, TrendingUp, TrendingDown, Clock } from 'lucide-react';
 import { api } from '../lib/api';
 
 export default function DashboardPage() {

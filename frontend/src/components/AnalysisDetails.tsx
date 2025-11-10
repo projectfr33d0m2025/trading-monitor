@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { Tag, Clock, Briefcase, FileText } from 'lucide-react';
 import type { AnalysisDecision } from '../lib/types';

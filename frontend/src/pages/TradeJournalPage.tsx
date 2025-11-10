@@ -256,11 +256,6 @@ export default function TradeJournalPage() {
     );
   };
 
-  const formatPercent = (entry: number, current: number) => {
-    const change = ((current - entry) / entry) * 100;
-    return `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
-  };
-
   const statusCounts = stats?.status_breakdown || {};
 
   return (
