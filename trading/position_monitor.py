@@ -113,7 +113,7 @@ class PositionMonitor:
                 SET current_price = %s,
                     market_value = %s,
                     unrealized_pnl = %s,
-                    last_updated = NOW()
+                    updated_at = NOW()
                 WHERE id = %s
             """, (current_price, market_value, unrealized_pnl, position['id']))
 
