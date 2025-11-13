@@ -53,7 +53,7 @@ INSERT INTO analysis_decision (
     true,
     true,
     '2025-01-10 09:45:00',
-    'ORD_S01_ENTRY_001',
+    '550e8400-e29b-41d4-a716-446655440001',
     1
 );
 
@@ -84,7 +84,7 @@ INSERT INTO order_execution (
     limit_price, filled_qty, filled_avg_price, filled_at, created_at
 ) VALUES (
     'S01 Entry Order',
-    1, 'TEST_S01_1752287109169', 'ORD_S01_ENTRY_001', 'CLIENT_S01_001',
+    1, 'TEST_S01_1752287109169', '550e8400-e29b-41d4-a716-446655440001', 'CLIENT_S01_001',
     'ENTRY', 'buy', 'filled', 'day', 10,
     150.50, 10, 150.52, '2025-01-10 10:15:00', '2025-01-10 09:45:00'
 );
@@ -96,7 +96,7 @@ INSERT INTO order_execution (
     stop_price, created_at
 ) VALUES (
     'S01 Stop-Loss',
-    1, 'TEST_S01_1752287109169', 'ORD_S01_SL_001',
+    1, 'TEST_S01_1752287109169', '550e8400-e29b-41d4-a716-446655440002',
     'STOP_LOSS', 'sell', 'cancelled', 'gtc', 10,
     145.00, '2025-01-10 10:16:00'
 );
@@ -108,7 +108,7 @@ INSERT INTO order_execution (
     limit_price, filled_qty, filled_avg_price, filled_at, created_at
 ) VALUES (
     'S01 Take-Profit',
-    1, 'TEST_S01_1752287109169', 'ORD_S01_TP_001',
+    1, 'TEST_S01_1752287109169', '550e8400-e29b-41d4-a716-446655440003',
     'TAKE_PROFIT', 'sell', 'filled', 'gtc', 10,
     160.00, 10, 160.10, '2025-01-15 14:20:00', '2025-01-10 10:16:00'
 );
@@ -135,7 +135,7 @@ INSERT INTO analysis_decision (
     true,
     true,
     '2025-01-11 09:45:00',
-    'ORD_S02_ENTRY_002',
+    '550e8400-e29b-41d4-a716-446655440004',
     2
 );
 
@@ -166,7 +166,7 @@ INSERT INTO order_execution (
     limit_price, filled_qty, filled_avg_price, filled_at, created_at
 ) VALUES (
     'S02 Entry Order',
-    2, 'TEST_S02_1752287209169', 'ORD_S02_ENTRY_002', 'CLIENT_S02_002',
+    2, 'TEST_S02_1752287209169', '550e8400-e29b-41d4-a716-446655440004', 'CLIENT_S02_002',
     'ENTRY', 'buy', 'filled', 'day', 5,
     133.80, 5, 133.75, '2025-01-11 10:20:00', '2025-01-11 09:45:00'
 );
@@ -178,7 +178,7 @@ INSERT INTO order_execution (
     stop_price, filled_qty, filled_avg_price, filled_at, created_at
 ) VALUES (
     'S02 Stop-Loss',
-    2, 'TEST_S02_1752287209169', 'ORD_S02_SL_002',
+    2, 'TEST_S02_1752287209169', '550e8400-e29b-41d4-a716-446655440005',
     'STOP_LOSS', 'sell', 'filled', 'gtc', 5,
     124.00, 5, 123.90, '2025-01-13 11:30:00', '2025-01-11 10:21:00'
 );
@@ -190,7 +190,7 @@ INSERT INTO order_execution (
     limit_price, created_at
 ) VALUES (
     'S02 Take-Profit',
-    2, 'TEST_S02_1752287209169', 'ORD_S02_TP_002',
+    2, 'TEST_S02_1752287209169', '550e8400-e29b-41d4-a716-446655440006',
     'TAKE_PROFIT', 'sell', 'cancelled', 'gtc', 5,
     145.50, '2025-01-11 10:21:00'
 );
@@ -217,7 +217,7 @@ INSERT INTO analysis_decision (
     true,
     true,
     '2025-01-12 09:45:00',
-    'ORD_S03_ENTRY_003',
+    '550e8400-e29b-41d4-a716-446655440007',
     3
 );
 
@@ -248,7 +248,7 @@ INSERT INTO order_execution (
     limit_price, filled_qty, filled_avg_price, filled_at, created_at
 ) VALUES (
     'S03 Entry Order',
-    3, 'TEST_S03_1752287309169', 'ORD_S03_ENTRY_003', 'CLIENT_S03_003',
+    3, 'TEST_S03_1752287309169', '550e8400-e29b-41d4-a716-446655440007', 'CLIENT_S03_003',
     'ENTRY', 'buy', 'filled', 'day', 4,
     225.50, 4, 225.45, '2025-01-12 10:25:00', '2025-01-12 09:45:00'
 );
@@ -260,7 +260,7 @@ INSERT INTO order_execution (
     stop_price, filled_qty, filled_avg_price, filled_at, created_at
 ) VALUES (
     'S03 Stop-Loss',
-    3, 'TEST_S03_1752287309169', 'ORD_S03_SL_003',
+    3, 'TEST_S03_1752287309169', '550e8400-e29b-41d4-a716-446655440008',
     'STOP_LOSS', 'sell', 'filled', 'gtc', 4,
     218.00, 4, 217.85, '2025-01-14 13:15:00', '2025-01-12 10:26:00'
 );
@@ -287,7 +287,7 @@ INSERT INTO analysis_decision (
     true,
     true,
     '2025-01-13 09:45:00',
-    'ORD_S04_ENTRY_004',
+    '550e8400-e29b-41d4-a716-446655440009',
     4
 );
 
@@ -317,7 +317,7 @@ INSERT INTO order_execution (
     limit_price, filled_qty, filled_avg_price, filled_at, created_at
 ) VALUES (
     'S04 Entry Order',
-    4, 'TEST_S04_1752287409169', 'ORD_S04_ENTRY_004', 'CLIENT_S04_004',
+    4, 'TEST_S04_1752287409169', '550e8400-e29b-41d4-a716-446655440009', 'CLIENT_S04_004',
     'ENTRY', 'buy', 'partially_filled', 'day', 10,
     142.00, 5, 141.98, '2025-01-13 11:00:00', '2025-01-13 09:45:00'
 );
@@ -329,7 +329,7 @@ INSERT INTO order_execution (
     stop_price, created_at
 ) VALUES (
     'S04 Stop-Loss',
-    4, 'TEST_S04_1752287409169', 'ORD_S04_SL_004',
+    4, 'TEST_S04_1752287409169', '550e8400-e29b-41d4-a716-44665544000a',
     'STOP_LOSS', 'sell', 'pending', 'gtc', 5,
     136.00, '2025-01-13 11:01:00'
 );
@@ -341,7 +341,7 @@ INSERT INTO order_execution (
     limit_price, created_at
 ) VALUES (
     'S04 Take-Profit',
-    4, 'TEST_S04_1752287409169', 'ORD_S04_TP_004',
+    4, 'TEST_S04_1752287409169', '550e8400-e29b-41d4-a716-44665544000b',
     'TAKE_PROFIT', 'sell', 'pending', 'gtc', 5,
     152.00, '2025-01-13 11:01:00'
 );
@@ -355,7 +355,7 @@ INSERT INTO position_tracking (
     'AMD Position - Partial',
     4, 'AMD', 5, 141.98,
     143.50, 717.50, 709.90, 7.60,
-    'ORD_S04_SL_004', 'ORD_S04_TP_004',
+    '550e8400-e29b-41d4-a716-44665544000a', '550e8400-e29b-41d4-a716-44665544000b',
     '2025-01-13 11:01:00', '2025-01-13 15:00:00'
 );
 
@@ -381,7 +381,7 @@ INSERT INTO analysis_decision (
     true,
     true,
     '2025-01-14 09:45:00',
-    'ORD_S05_ENTRY_005',
+    '550e8400-e29b-41d4-a716-44665544000c',
     5
 );
 
@@ -411,7 +411,7 @@ INSERT INTO order_execution (
     limit_price, created_at
 ) VALUES (
     'S05 Entry Order',
-    5, 'TEST_S05_1752287509169', 'ORD_S05_ENTRY_005', 'CLIENT_S05_005',
+    5, 'TEST_S05_1752287509169', '550e8400-e29b-41d4-a716-44665544000c', 'CLIENT_S05_005',
     'ENTRY', 'buy', 'cancelled', 'day', 3,
     395.00, '2025-01-14 09:00:00'
 );
@@ -439,7 +439,7 @@ INSERT INTO analysis_decision (
     true,
     true,
     '2025-01-15 09:45:00',
-    'ORD_S06_ENTRY_OLD',
+    '550e8400-e29b-41d4-a716-44665544000d',
     6
 );
 
@@ -470,7 +470,7 @@ INSERT INTO order_execution (
     limit_price, created_at
 ) VALUES (
     'S06 Entry Order (Old)',
-    6, 'TEST_S06A_1752287609169', 'ORD_S06_ENTRY_OLD', 'CLIENT_S06A_006',
+    6, 'TEST_S06A_1752287609169', '550e8400-e29b-41d4-a716-44665544000d', 'CLIENT_S06A_006',
     'ENTRY', 'buy', 'cancelled', 'day', 8,
     151.00, '2025-01-15 09:00:00'
 );
@@ -500,7 +500,7 @@ INSERT INTO order_execution (
     limit_price, created_at
 ) VALUES (
     'S06 Entry Order (New)',
-    7, 'TEST_S06A_1752287609169', 'ORD_S06_ENTRY_NEW', 'CLIENT_S06B_007',
+    7, 'TEST_S06A_1752287609169', '550e8400-e29b-41d4-a716-44665544000e', 'CLIENT_S06B_007',
     'ENTRY', 'buy', 'pending', 'day', 8,
     148.50, '2025-01-15 09:45:00'
 );
@@ -557,7 +557,7 @@ INSERT INTO order_execution (
     limit_price, filled_qty, filled_avg_price, filled_at, created_at
 ) VALUES (
     'S07 Entry Order',
-    8, 'TEST_S07_1752287709169', 'ORD_S07_ENTRY_007', 'CLIENT_S07_008',
+    8, 'TEST_S07_1752287709169', '550e8400-e29b-41d4-a716-44665544000f', 'CLIENT_S07_008',
     'ENTRY', 'buy', 'filled', 'day', 7,
     135.00, 7, 135.10, '2025-01-10 11:00:00', '2025-01-10 10:00:00'
 );
@@ -569,7 +569,7 @@ INSERT INTO order_execution (
     stop_price, created_at
 ) VALUES (
     'S07 Stop-Loss',
-    8, 'TEST_S07_1752287709169', 'ORD_S07_SL_007',
+    8, 'TEST_S07_1752287709169', '550e8400-e29b-41d4-a716-446655440010',
     'STOP_LOSS', 'sell', 'pending', 'gtc', 7,
     128.00, '2025-01-10 11:01:00'
 );
@@ -581,7 +581,7 @@ INSERT INTO order_execution (
     limit_price, created_at
 ) VALUES (
     'S07 Take-Profit',
-    8, 'TEST_S07_1752287709169', 'ORD_S07_TP_007',
+    8, 'TEST_S07_1752287709169', '550e8400-e29b-41d4-a716-446655440011',
     'TAKE_PROFIT', 'sell', 'pending', 'gtc', 7,
     148.00, '2025-01-10 11:01:00'
 );
@@ -595,7 +595,7 @@ INSERT INTO position_tracking (
     'NVDA Position - NO_ACTION',
     8, 'NVDA', 7, 135.10,
     138.50, 969.50, 945.70, 23.80,
-    'ORD_S07_SL_007', 'ORD_S07_TP_007',
+    '550e8400-e29b-41d4-a716-446655440010', '550e8400-e29b-41d4-a716-446655440011',
     '2025-01-10 11:01:00', '2025-01-16 15:00:00'
 );
 
@@ -621,7 +621,7 @@ INSERT INTO analysis_decision (
     true,
     true,
     '2025-01-17 09:45:00',
-    'ORD_S08_ENTRY_008',
+    '550e8400-e29b-41d4-a716-446655440012',
     9
 );
 
@@ -652,7 +652,7 @@ INSERT INTO order_execution (
     limit_price, filled_qty, filled_avg_price, filled_at, created_at
 ) VALUES (
     'S08 Entry Order',
-    9, 'TEST_S08_1752287809169', 'ORD_S08_ENTRY_008', 'CLIENT_S08_009',
+    9, 'TEST_S08_1752287809169', '550e8400-e29b-41d4-a716-446655440012', 'CLIENT_S08_009',
     'ENTRY', 'buy', 'filled', 'day', 4,
     230.00, 4, 230.15, '2025-01-17 10:30:00', '2025-01-17 09:45:00'
 );
@@ -664,7 +664,7 @@ INSERT INTO order_execution (
     stop_price, created_at
 ) VALUES (
     'S08 Stop-Loss',
-    9, 'TEST_S08_1752287809169', 'ORD_S08_SL_008',
+    9, 'TEST_S08_1752287809169', '550e8400-e29b-41d4-a716-446655440013',
     'STOP_LOSS', 'sell', 'cancelled', 'gtc', 4,
     220.00, '2025-01-17 10:31:00'
 );
@@ -676,7 +676,7 @@ INSERT INTO order_execution (
     limit_price, created_at
 ) VALUES (
     'S08 Take-Profit',
-    9, 'TEST_S08_1752287809169', 'ORD_S08_TP_008',
+    9, 'TEST_S08_1752287809169', '550e8400-e29b-41d4-a716-446655440014',
     'TAKE_PROFIT', 'sell', 'cancelled', 'gtc', 4,
     245.00, '2025-01-17 10:31:00'
 );
@@ -705,7 +705,7 @@ INSERT INTO analysis_decision (
     true,
     true,
     '2025-01-18 09:45:00',
-    'ORD_S09_ENTRY_009',
+    '550e8400-e29b-41d4-a716-446655440015',
     10
 );
 
@@ -733,7 +733,7 @@ INSERT INTO order_execution (
     limit_price, created_at
 ) VALUES (
     'S09 Entry Order',
-    10, 'TEST_S09_1752287909169', 'ORD_S09_ENTRY_009', 'CLIENT_S09_010',
+    10, 'TEST_S09_1752287909169', '550e8400-e29b-41d4-a716-446655440015', 'CLIENT_S09_010',
     'ENTRY', 'buy', 'pending', 'day', 6,
     145.00, '2025-01-18 09:45:00'
 );
@@ -762,7 +762,7 @@ INSERT INTO analysis_decision (
     true,
     true,
     '2025-01-15 09:45:00',
-    'ORD_S10_ENTRY_010',
+    '550e8400-e29b-41d4-a716-446655440016',
     11
 );
 
@@ -792,7 +792,7 @@ INSERT INTO order_execution (
     limit_price, filled_qty, filled_avg_price, filled_at, created_at
 ) VALUES (
     'S10 Entry Order',
-    11, 'TEST_S10_1752288009169', 'ORD_S10_ENTRY_010', 'CLIENT_S10_011',
+    11, 'TEST_S10_1752288009169', '550e8400-e29b-41d4-a716-446655440016', 'CLIENT_S10_011',
     'ENTRY', 'buy', 'filled', 'day', 3,
     398.00, 3, 398.20, '2025-01-15 11:00:00', '2025-01-15 09:45:00'
 );
@@ -804,7 +804,7 @@ INSERT INTO order_execution (
     stop_price, created_at
 ) VALUES (
     'S10 Stop-Loss',
-    11, 'TEST_S10_1752288009169', 'ORD_S10_SL_010',
+    11, 'TEST_S10_1752288009169', '550e8400-e29b-41d4-a716-446655440017',
     'STOP_LOSS', 'sell', 'pending', 'gtc', 3,
     390.00, '2025-01-15 11:01:00'
 );
@@ -816,7 +816,7 @@ INSERT INTO order_execution (
     limit_price, created_at
 ) VALUES (
     'S10 Take-Profit',
-    11, 'TEST_S10_1752288009169', 'ORD_S10_TP_010',
+    11, 'TEST_S10_1752288009169', '550e8400-e29b-41d4-a716-446655440018',
     'TAKE_PROFIT', 'sell', 'pending', 'gtc', 3,
     410.00, '2025-01-15 11:01:00'
 );
@@ -830,7 +830,7 @@ INSERT INTO position_tracking (
     'MSFT Position - Stale',
     11, 'MSFT', 3, 398.20,
     399.00, 1197.00, 1194.60, 2.40,
-    'ORD_S10_SL_010', 'ORD_S10_TP_010',
+    '550e8400-e29b-41d4-a716-446655440017', '550e8400-e29b-41d4-a716-446655440018',
     '2025-01-15 11:01:00', '2025-01-15 12:00:00'
 );
 
@@ -882,7 +882,7 @@ INSERT INTO analysis_decision (
     true,
     true,
     '2025-01-16 09:45:00',
-    'ORD_S12A_ENTRY_011',
+    '550e8400-e29b-41d4-a716-446655440019',
     12
 );
 
@@ -911,7 +911,7 @@ INSERT INTO order_execution (
     limit_price, filled_qty, filled_avg_price, filled_at, created_at
 ) VALUES (
     'S12A Entry Order',
-    12, 'TEST_S12A_1752288209169', 'ORD_S12A_ENTRY_011', 'CLIENT_S12A_012',
+    12, 'TEST_S12A_1752288209169', '550e8400-e29b-41d4-a716-446655440019', 'CLIENT_S12A_012',
     'ENTRY', 'buy', 'filled', 'day', 8,
     152.00, 8, 152.10, '2025-01-16 11:00:00', '2025-01-16 09:45:00'
 );
@@ -922,7 +922,7 @@ INSERT INTO order_execution (
     stop_price, created_at
 ) VALUES (
     'S12A Stop-Loss',
-    12, 'TEST_S12A_1752288209169', 'ORD_S12A_SL_011',
+    12, 'TEST_S12A_1752288209169', '550e8400-e29b-41d4-a716-44665544001a',
     'STOP_LOSS', 'sell', 'pending', 'gtc', 8,
     148.00, '2025-01-16 11:01:00'
 );
@@ -933,7 +933,7 @@ INSERT INTO order_execution (
     limit_price, created_at
 ) VALUES (
     'S12A Take-Profit',
-    12, 'TEST_S12A_1752288209169', 'ORD_S12A_TP_011',
+    12, 'TEST_S12A_1752288209169', '550e8400-e29b-41d4-a716-44665544001b',
     'TAKE_PROFIT', 'sell', 'pending', 'gtc', 8,
     160.00, '2025-01-16 11:01:00'
 );
@@ -946,7 +946,7 @@ INSERT INTO position_tracking (
     'AAPL Position #1',
     12, 'AAPL', 8, 152.10,
     154.00, 1232.00, 1216.80, 15.20,
-    'ORD_S12A_SL_011', 'ORD_S12A_TP_011',
+    '550e8400-e29b-41d4-a716-44665544001a', '550e8400-e29b-41d4-a716-44665544001b',
     '2025-01-16 11:01:00', '2025-01-18 15:00:00'
 );
 
@@ -966,7 +966,7 @@ INSERT INTO analysis_decision (
     true,
     true,
     '2025-01-17 14:45:00',
-    'ORD_S12B_ENTRY_012',
+    '550e8400-e29b-41d4-a716-44665544001c',
     13
 );
 
@@ -995,7 +995,7 @@ INSERT INTO order_execution (
     limit_price, filled_qty, filled_avg_price, filled_at, created_at
 ) VALUES (
     'S12B Entry Order',
-    13, 'TEST_S12B_1752288309169', 'ORD_S12B_ENTRY_012', 'CLIENT_S12B_013',
+    13, 'TEST_S12B_1752288309169', '550e8400-e29b-41d4-a716-44665544001c', 'CLIENT_S12B_013',
     'ENTRY', 'buy', 'filled', 'day', 5,
     149.00, 5, 148.95, '2025-01-17 15:30:00', '2025-01-17 14:45:00'
 );
@@ -1006,7 +1006,7 @@ INSERT INTO order_execution (
     stop_price, created_at
 ) VALUES (
     'S12B Stop-Loss',
-    13, 'TEST_S12B_1752288309169', 'ORD_S12B_SL_012',
+    13, 'TEST_S12B_1752288309169', '550e8400-e29b-41d4-a716-44665544001d',
     'STOP_LOSS', 'sell', 'pending', 'gtc', 5,
     145.00, '2025-01-17 15:31:00'
 );
@@ -1017,7 +1017,7 @@ INSERT INTO order_execution (
     limit_price, created_at
 ) VALUES (
     'S12B Take-Profit',
-    13, 'TEST_S12B_1752288309169', 'ORD_S12B_TP_012',
+    13, 'TEST_S12B_1752288309169', '550e8400-e29b-41d4-a716-44665544001e',
     'TAKE_PROFIT', 'sell', 'pending', 'gtc', 5,
     158.00, '2025-01-17 15:31:00'
 );
@@ -1030,7 +1030,7 @@ INSERT INTO position_tracking (
     'AAPL Position #2',
     13, 'AAPL', 5, 148.95,
     154.00, 770.00, 744.75, 25.25,
-    'ORD_S12B_SL_012', 'ORD_S12B_TP_012',
+    '550e8400-e29b-41d4-a716-44665544001d', '550e8400-e29b-41d4-a716-44665544001e',
     '2025-01-17 15:31:00', '2025-01-18 15:00:00'
 );
 
@@ -1104,7 +1104,7 @@ INSERT INTO analysis_decision (
     true,
     true,
     '2025-01-18 09:45:00',
-    'ORD_S16A_ENTRY_013',
+    '550e8400-e29b-41d4-a716-44665544001f',
     14
 );
 
@@ -1133,7 +1133,7 @@ INSERT INTO order_execution (
     limit_price, filled_qty, filled_avg_price, filled_at, created_at
 ) VALUES (
     'S16A Entry Order',
-    14, 'TEST_S16A_1752288509169', 'ORD_S16A_ENTRY_013', 'CLIENT_S16A_014',
+    14, 'TEST_S16A_1752288509169', '550e8400-e29b-41d4-a716-44665544001f', 'CLIENT_S16A_014',
     'ENTRY', 'buy', 'filled', 'day', 2,
     400.00, 2, 400.05, '2025-01-18 11:00:00', '2025-01-18 09:45:00'
 );
@@ -1144,7 +1144,7 @@ INSERT INTO order_execution (
     stop_price, created_at
 ) VALUES (
     'S16A Stop-Loss',
-    14, 'TEST_S16A_1752288509169', 'ORD_S16A_SL_013',
+    14, 'TEST_S16A_1752288509169', '550e8400-e29b-41d4-a716-446655440020',
     'STOP_LOSS', 'sell', 'pending', 'gtc', 2,
     395.00, '2025-01-18 11:01:00'
 );
@@ -1155,7 +1155,7 @@ INSERT INTO order_execution (
     limit_price, created_at
 ) VALUES (
     'S16A Take-Profit',
-    14, 'TEST_S16A_1752288509169', 'ORD_S16A_TP_013',
+    14, 'TEST_S16A_1752288509169', '550e8400-e29b-41d4-a716-446655440021',
     'TAKE_PROFIT', 'sell', 'pending', 'gtc', 2,
     415.00, '2025-01-18 11:01:00'
 );
@@ -1168,7 +1168,7 @@ INSERT INTO position_tracking (
     'MSFT Position - Profit',
     14, 'MSFT', 2, 400.05,
     412.50, 825.00, 800.10, 24.90,
-    'ORD_S16A_SL_013', 'ORD_S16A_TP_013',
+    '550e8400-e29b-41d4-a716-446655440020', '550e8400-e29b-41d4-a716-446655440021',
     '2025-01-18 11:01:00', '2025-01-18 15:30:00'
 );
 
@@ -1188,7 +1188,7 @@ INSERT INTO analysis_decision (
     true,
     true,
     '2025-01-18 10:15:00',
-    'ORD_S16B_ENTRY_014',
+    '550e8400-e29b-41d4-a716-446655440022',
     15
 );
 
@@ -1217,7 +1217,7 @@ INSERT INTO order_execution (
     limit_price, filled_qty, filled_avg_price, filled_at, created_at
 ) VALUES (
     'S16B Entry Order',
-    15, 'TEST_S16B_1752288609169', 'ORD_S16B_ENTRY_014', 'CLIENT_S16B_015',
+    15, 'TEST_S16B_1752288609169', '550e8400-e29b-41d4-a716-446655440022', 'CLIENT_S16B_015',
     'ENTRY', 'buy', 'filled', 'day', 3,
     232.00, 3, 232.10, '2025-01-18 11:30:00', '2025-01-18 10:15:00'
 );
@@ -1228,7 +1228,7 @@ INSERT INTO order_execution (
     stop_price, created_at
 ) VALUES (
     'S16B Stop-Loss',
-    15, 'TEST_S16B_1752288609169', 'ORD_S16B_SL_014',
+    15, 'TEST_S16B_1752288609169', '550e8400-e29b-41d4-a716-446655440023',
     'STOP_LOSS', 'sell', 'pending', 'gtc', 3,
     225.00, '2025-01-18 11:31:00'
 );
@@ -1239,7 +1239,7 @@ INSERT INTO order_execution (
     limit_price, created_at
 ) VALUES (
     'S16B Take-Profit',
-    15, 'TEST_S16B_1752288609169', 'ORD_S16B_TP_014',
+    15, 'TEST_S16B_1752288609169', '550e8400-e29b-41d4-a716-446655440024',
     'TAKE_PROFIT', 'sell', 'pending', 'gtc', 3,
     242.00, '2025-01-18 11:31:00'
 );
@@ -1252,7 +1252,7 @@ INSERT INTO position_tracking (
     'TSLA Position - Loss',
     15, 'TSLA', 3, 232.10,
     226.00, 678.00, 696.30, -18.30,
-    'ORD_S16B_SL_014', 'ORD_S16B_TP_014',
+    '550e8400-e29b-41d4-a716-446655440023', '550e8400-e29b-41d4-a716-446655440024',
     '2025-01-18 11:31:00', '2025-01-18 15:30:00'
 );
 
