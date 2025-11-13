@@ -35,6 +35,6 @@ export function getImageUrl(url: string): string {
   }
 
   // If it's a relative URL, prepend the API base URL
-  const API_BASE = 'http://localhost:8000';
+  const API_BASE = 'http://localhost:8085';
   return `${API_BASE}${url.startsWith('/') ? url : '/' + url}`;
 }

@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile.api
     ports:
-      - "8000:8000"
+      - "8085:8085"
     environment:
       - POSTGRES_HOST=${POSTGRES_HOST:-localhost}
       - POSTGRES_PORT=${POSTGRES_PORT:-5432}
@@ -19,7 +19,7 @@ services:
       - ./api:/app/api
       - ./shared:/app/shared
       - ./.env:/app/.env
-    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8085 --reload
     networks:
       - trading-network
 
@@ -31,7 +31,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - VITE_API_URL=http://api:8000
+      - VITE_API_URL=http://api:8085
     volumes:
       - ./frontend:/app
       - /app/node_modules

@@ -60,8 +60,8 @@ trading-monitor/
 
 3. **Access the dashboard**
    - Frontend: http://localhost:3000
-   - API: http://localhost:8000
-   - API Docs: http://localhost:8000/docs
+   - API: http://localhost:8085
+   - API Docs: http://localhost:8085/docs
 
 ### Option 2: Manual Setup
 
@@ -86,7 +86,7 @@ trading-monitor/
    uvicorn main:app --reload
    ```
 
-   API will be available at http://localhost:8000
+   API will be available at http://localhost:8085
 
 #### Frontend Dashboard
 
@@ -258,7 +258,7 @@ The dashboard is fully responsive and optimized for:
 
 ### API Documentation
 
-Once the API is running, visit http://localhost:8000/docs for interactive API documentation powered by Swagger UI.
+Once the API is running, visit http://localhost:8085/docs for interactive API documentation powered by Swagger UI.
 
 ## 📊 Database Schema
 
