@@ -41,6 +41,30 @@ services:
     depends_on:
       - api
 
+  # Trading Scheduler
+  trading:
+    build:
+      context: .
+      dockerfile: Dockerfile.trading
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST:-localhost}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_DB=${POSTGRES_DB:-nocodb}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_SCHEMA=${POSTGRES_SCHEMA:-public}
+      - ALPACA_API_KEY=${ALPACA_API_KEY}
+      - ALPACA_SECRET_KEY=${ALPACA_SECRET_KEY}
+      - ALPACA_BASE_URL=${ALPACA_BASE_URL:-https://paper-api.alpaca.markets}
+    volumes:
+      - ./trading:/app/trading
+      - ./shared:/app/shared
+      - ./.env:/app/.env
+    networks:
+      - trading-network
+    depends_on:
+      - api
+
 networks:
   trading-network:
     driver: bridge
