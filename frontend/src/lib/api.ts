@@ -11,7 +11,21 @@ import type {
   PaginatedResponse,
 } from './types';
 
-const API_BASE_URL = 'http://localhost:8085/api';
+// Determine API base URL dynamically
+const getApiBaseUrl = (): string => {
+  // Use environment variable if provided
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  // Otherwise, construct based on current hostname
+  // This allows the app to work when accessed from any IP/domain
+  const protocol = window.location.protocol;
+  const hostname = window.location.hostname;
+  return `${protocol}//${hostname}:8085/api`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 class ApiClient {
   private async fetchAPI<T>(endpoint: string): Promise<T> {
