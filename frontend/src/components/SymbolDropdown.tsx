@@ -25,11 +25,11 @@ export function SymbolDropdown({
   };
 
   return (
-    <div className={inline ? 'w-full' : 'mb-4'}>
-      <label className="hidden sm:block text-sm font-medium text-gray-700 mb-2">
+    <div className={`${inline ? 'w-full' : 'mb-4'} sm:flex sm:flex-row sm:items-center`}>
+      <label className="hidden sm:block text-sm font-medium text-gray-700 sm:w-32 sm:mr-3 sm:flex-shrink-0">
         Symbol
       </label>
-      <div className="relative">
+      <div className="relative sm:flex-1">
         <select
           value={selectedSymbol || ''}
           onChange={handleSymbolChange}
