@@ -263,7 +263,8 @@ export default function TradeJournalPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Trade Journal</h1>
+          <h1 className="text-2xl font-bold text-gray-900 ml-15">Trade Journal</h1>
+          <br/>
           <p className="mt-1 text-sm text-gray-500">
             Track all your trades from entry to exit with positions and orders
           </p>

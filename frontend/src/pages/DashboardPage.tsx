@@ -67,7 +67,8 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Welcome */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Trading Monitor Dashboard</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 ml-15">Trading Monitor Dashboard</h1>
+        <br/>
         <p className="mt-1 text-sm text-gray-500">
           Overview of your trading activities and performance
         </p>
