@@ -26,15 +26,18 @@ export async function fetchAnalysesByDate(dateString: string): Promise<AnalysisD
 }
 
 /**
- * Get image URL - handles both relative and absolute URLs
+ * Get image URL from NocoDB image format
+ * @param imageData - NocoDB image array format: [{"path": "download/...", ...}]
+ * @returns Full URL to the image
  */
-export function getImageUrl(url: string): string {
-  // If it's already a full URL (http/https), return as is
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
+export function getImageUrl(imageData: Array<{ path: string }>): string {
+  if (!imageData || imageData.length === 0 || !imageData[0].path) {
+    return '';
   }
 
-  // If it's a relative URL, prepend the API base URL
-  const API_BASE = 'http://localhost:8085';
-  return `${API_BASE}${url.startsWith('/') ? url : '/' + url}`;
+  const NOCODB_BASE = import.meta.env.VITE_NOCODB_BASE_URL || 'http://localhost:8080';
+  const path = imageData[0].path;
+
+  // Ensure path doesn't start with / since it's already in the correct format
+  return `${NOCODB_BASE}/${path.startsWith('/') ? path.substring(1) : path}`;
 }
