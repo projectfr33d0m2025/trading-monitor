@@ -213,7 +213,7 @@ export default function AnalysisPage() {
 
           {currentAnalysis && (
             <div className="lg:flex lg:flex-col lg:h-full lg:overflow-hidden">
-              <AnalysisDetails analysis={currentAnalysis} className="mb-3 sm:mb-4 lg:flex-shrink-0" />
+              <AnalysisDetails analysis={currentAnalysis} className="hidden sm:block mb-3 sm:mb-4 lg:flex-shrink-0" />
 
               <div className="hidden lg:grid grid-cols-2 gap-6 flex-1 min-h-0 analysis-grid">
                 <div className="flex flex-col min-h-0">
