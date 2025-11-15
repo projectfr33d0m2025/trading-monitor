@@ -164,7 +164,7 @@ export default function AnalysisPage() {
             </button>
           </div>
 
-          <div className={`${filtersCollapsed ? 'hidden' : 'flex'} sm:flex flex-row gap-2 sm:gap-4 analysis-selectors w-full transition-all duration-200`}>
+          <div className={`${filtersCollapsed ? 'hidden' : 'flex'} sm:flex flex-col sm:flex-row gap-2 sm:gap-4 analysis-selectors w-full transition-all duration-200`}>
             <div className="flex-1 min-w-0">
               <DateSelector
                 value={selectedDate || undefined}
