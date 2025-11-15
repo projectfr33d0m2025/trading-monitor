@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Edit2, Save, X } from 'lucide-react';
 import type { AnalysisDecision } from '../lib/types';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import type { Components } from 'react-markdown';
 
 interface AnalysisContentProps {
   analysis: AnalysisDecision;
@@ -9,6 +12,118 @@ interface AnalysisContentProps {
 }
 
 type TabType = 'analysis' | 'prompt' | 'decision' | 'remarks';
+
+// Custom components for ReactMarkdown
+const markdownComponents: Components = {
+  h1: ({children}) => (
+    <h1 className="text-2xl font-bold mb-6 text-gray-900">
+      {children}
+    </h1>
+  ),
+  h2: ({children}) => (
+    <h2 className="text-xl font-semibold mt-6 mb-4 text-gray-800">
+      {children}
+    </h2>
+  ),
+  h3: ({children}) => (
+    <h3 className="text-lg font-semibold mt-4 mb-3 text-gray-800">
+      {children}
+    </h3>
+  ),
+  p: ({children}) => (
+    <p className="mb-4 text-gray-700 leading-relaxed">
+      {children}
+    </p>
+  ),
+  ul: ({children}) => (
+    <ul className="mb-4 ml-6 list-disc space-y-1">
+      {children}
+    </ul>
+  ),
+  ol: ({children}) => (
+    <ol className="mb-4 ml-6 list-decimal space-y-1">
+      {children}
+    </ol>
+  ),
+  li: ({children}) => (
+    <li className="text-gray-700 leading-relaxed">
+      {children}
+    </li>
+  ),
+  strong: ({children}) => (
+    <strong className="font-semibold text-gray-900">
+      {children}
+    </strong>
+  ),
+  em: ({children}) => (
+    <em className="italic">
+      {children}
+    </em>
+  ),
+  blockquote: ({children}) => (
+    <blockquote className="border-l-4 border-gray-300 pl-4 my-4 italic text-gray-600">
+      {children}
+    </blockquote>
+  ),
+  code: ({className, children, ...props}) => {
+    const match = /language-(\w+)/.exec(className || '');
+    const isInline = !match;
+
+    if (isInline) {
+      return (
+        <code className="bg-gray-100 rounded px-1.5 py-0.5 text-sm font-mono text-gray-800">
+          {children}
+        </code>
+      );
+    }
+
+    return (
+      <code className={className} {...props}>
+        {children}
+      </code>
+    );
+  },
+  pre: ({children}) => (
+    <pre className="bg-gray-100 rounded p-4 overflow-x-auto mb-4 text-sm font-mono">
+      {children}
+    </pre>
+  ),
+  hr: () => (
+    <hr className="my-8 border-t border-gray-300" />
+  ),
+  table: ({children}) => (
+    <div className="overflow-x-auto mb-4">
+      <table className="min-w-full border-collapse border border-gray-300">
+        {children}
+      </table>
+    </div>
+  ),
+  thead: ({children}) => (
+    <thead className="bg-gray-50">
+      {children}
+    </thead>
+  ),
+  tbody: ({children}) => (
+    <tbody>
+      {children}
+    </tbody>
+  ),
+  tr: ({children}) => (
+    <tr className="border-b border-gray-200 hover:bg-gray-50">
+      {children}
+    </tr>
+  ),
+  th: ({children}) => (
+    <th className="text-left font-semibold text-gray-900 p-3 border border-gray-300 bg-gray-100">
+      {children}
+    </th>
+  ),
+  td: ({children}) => (
+    <td className="p-3 border border-gray-300 text-gray-700">
+      {children}
+    </td>
+  ),
+};
 
 export function AnalysisContent({ analysis, onRemarksUpdate, className = '' }: AnalysisContentProps) {
   const [activeTab, setActiveTab] = useState<TabType>('analysis');
@@ -88,10 +203,10 @@ export function AnalysisContent({ analysis, onRemarksUpdate, className = '' }: A
           {activeTab === 'analysis' && (
             <div className="space-y-4">
               {analysis.Analysis ? (
-                <div className="prose prose-sm max-w-none text-gray-900">
-                  <div className="whitespace-pre-wrap leading-relaxed">
+                <div className="max-w-none">
+                  <ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
                     {analysis.Analysis}
-                  </div>
+                  </ReactMarkdown>
                 </div>
               ) : (
                 <div className="text-gray-500 text-sm">No analysis content available.</div>
@@ -103,10 +218,10 @@ export function AnalysisContent({ analysis, onRemarksUpdate, className = '' }: A
           {activeTab === 'prompt' && (
             <div className="space-y-4">
               {analysis.Analysis_Prompt ? (
-                <div className="prose prose-sm max-w-none text-gray-900">
-                  <div className="whitespace-pre-wrap leading-relaxed">
+                <div className="max-w-none">
+                  <ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
                     {analysis.Analysis_Prompt}
-                  </div>
+                  </ReactMarkdown>
                 </div>
               ) : (
                 <div className="text-gray-500 text-sm">No analysis prompt available.</div>
