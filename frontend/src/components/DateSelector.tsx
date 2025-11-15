@@ -32,7 +32,7 @@ export function DateSelector({ value, onDateSelect, inline = false }: DateSelect
 
   return (
     <div className={inline ? 'w-full' : 'mb-4'}>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+      <label className="hidden sm:block text-sm font-medium text-gray-700 mb-2">
         Analysis Date
       </label>
       <div className="relative">

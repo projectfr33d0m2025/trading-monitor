@@ -54,11 +54,7 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 640px) {
-  .analysis-selectors {
-    flex-direction: column;
-  }
-}
+/* Removed: analysis-selectors now stays horizontal on mobile to save space */
 
 /* Smooth transitions */
 .analysis-selectors,
