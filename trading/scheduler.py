@@ -14,9 +14,14 @@ from order_executor import OrderExecutor
 from order_monitor import OrderMonitor
 from position_monitor import PositionMonitor
 import logging
+import os
 import pytz
 import signal
 import sys
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -72,77 +77,97 @@ def shutdown_handler(signum, frame):
 def setup_scheduler():
     """Configure all scheduled jobs"""
 
-    # Program 2: Order Executor - Once at 9:45 AM ET (Mon-Fri)
+    # Program 2: Order Executor - Once at configured time
+    executor_hour = int(os.getenv('ORDER_EXECUTOR_HOUR', '9'))
+    executor_minute = int(os.getenv('ORDER_EXECUTOR_MINUTE', '45'))
+    executor_dow = os.getenv('ORDER_EXECUTOR_DAY_OF_WEEK', 'mon-fri')
+
     scheduler.add_job(
         run_order_executor,
         CronTrigger(
-            day_of_week='mon-fri',
-            hour=9,
-            minute=45,
+            day_of_week=executor_dow,
+            hour=executor_hour,
+            minute=executor_minute,
             timezone=eastern
         ),
         id='order_executor',
-        name='Order Executor (9:45 AM ET)',
+        name=f'Order Executor ({executor_hour}:{executor_minute:02d} ET)',
         max_instances=1,
         coalesce=True
     )
 
-    # Program 3: Order Monitor - Every 5 minutes during trading hours (9:30 AM - 4:00 PM ET, Mon-Fri)
+    # Program 3: Order Monitor - During trading hours
+    om_trading_hours = os.getenv('ORDER_MONITOR_TRADING_HOURS', '9-15')
+    om_trading_interval = os.getenv('ORDER_MONITOR_TRADING_INTERVAL', '*/5')
+    om_trading_dow = os.getenv('ORDER_MONITOR_TRADING_DOW', 'mon-fri')
+
     scheduler.add_job(
         run_order_monitor,
         CronTrigger(
-            day_of_week='mon-fri',
-            hour='9-15',  # 9 AM to 3:59 PM
-            minute='*/5',  # Every 5 minutes
+            day_of_week=om_trading_dow,
+            hour=om_trading_hours,
+            minute=om_trading_interval,
             timezone=eastern
         ),
         id='order_monitor_trading',
-        name='Order Monitor (every 5 min during trading)',
+        name=f'Order Monitor ({om_trading_interval} min, hours {om_trading_hours} ET)',
         max_instances=1,
         coalesce=True
     )
 
-    # Program 3: Order Monitor - Once at 6:00 PM ET (Mon-Fri)
+    # Program 3: Order Monitor - End of day check
+    om_eod_hour = int(os.getenv('ORDER_MONITOR_EOD_HOUR', '18'))
+    om_eod_minute = int(os.getenv('ORDER_MONITOR_EOD_MINUTE', '0'))
+    om_eod_dow = os.getenv('ORDER_MONITOR_EOD_DOW', 'mon-fri')
+
     scheduler.add_job(
         run_order_monitor,
         CronTrigger(
-            day_of_week='mon-fri',
-            hour=18,
-            minute=0,
+            day_of_week=om_eod_dow,
+            hour=om_eod_hour,
+            minute=om_eod_minute,
             timezone=eastern
         ),
         id='order_monitor_eod',
-        name='Order Monitor (6:00 PM ET)',
+        name=f'Order Monitor EOD ({om_eod_hour}:{om_eod_minute:02d} ET)',
         max_instances=1,
         coalesce=True
     )
 
-    # Program 4: Position Monitor - Every 10 minutes during trading hours (9:30 AM - 4:00 PM ET, Mon-Fri)
+    # Program 4: Position Monitor - During trading hours
+    pm_trading_hours = os.getenv('POSITION_MONITOR_TRADING_HOURS', '9-15')
+    pm_trading_interval = os.getenv('POSITION_MONITOR_TRADING_INTERVAL', '*/10')
+    pm_trading_dow = os.getenv('POSITION_MONITOR_TRADING_DOW', 'mon-fri')
+
     scheduler.add_job(
         run_position_monitor,
         CronTrigger(
-            day_of_week='mon-fri',
-            hour='9-15',  # 9 AM to 3:59 PM
-            minute='*/10',  # Every 10 minutes
+            day_of_week=pm_trading_dow,
+            hour=pm_trading_hours,
+            minute=pm_trading_interval,
             timezone=eastern
         ),
         id='position_monitor_trading',
-        name='Position Monitor (every 10 min during trading)',
+        name=f'Position Monitor ({pm_trading_interval} min, hours {pm_trading_hours} ET)',
         max_instances=1,
         coalesce=True
     )
 
-    # Program 4: Position Monitor - Once at 6:15 PM ET (Mon-Fri)
+    # Program 4: Position Monitor - End of day check
+    pm_eod_hour = int(os.getenv('POSITION_MONITOR_EOD_HOUR', '18'))
+    pm_eod_minute = int(os.getenv('POSITION_MONITOR_EOD_MINUTE', '15'))
+    pm_eod_dow = os.getenv('POSITION_MONITOR_EOD_DOW', 'mon-fri')
+
     scheduler.add_job(
         run_position_monitor,
         CronTrigger(
-            day_of_week='mon-fri',
-            hour=18,
-            minute=15,
+            day_of_week=pm_eod_dow,
+            hour=pm_eod_hour,
+            minute=pm_eod_minute,
             timezone=eastern
         ),
         id='position_monitor_eod',
-        name='Position Monitor (6:15 PM ET)',
+        name=f'Position Monitor EOD ({pm_eod_hour}:{pm_eod_minute:02d} ET)',
         max_instances=1,
         coalesce=True
     )

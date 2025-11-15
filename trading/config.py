@@ -35,9 +35,3 @@ def get_postgres_config(test_mode=False):
 ALPACA_API_KEY = os.getenv('ALPACA_API_KEY')
 ALPACA_SECRET_KEY = os.getenv('ALPACA_SECRET_KEY')
 ALPACA_PAPER = os.getenv('ALPACA_PAPER', 'true').lower() == 'true'
-
-# Trading Schedule Configuration (US Eastern Time)
-TRADING_START_HOUR = int(os.getenv('TRADING_START_HOUR', '9'))
-TRADING_START_MINUTE = int(os.getenv('TRADING_START_MINUTE', '30'))
-TRADING_END_HOUR = int(os.getenv('TRADING_END_HOUR', '16'))
-TRADING_END_MINUTE = int(os.getenv('TRADING_END_MINUTE', '0'))
