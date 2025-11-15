@@ -5,6 +5,7 @@ Provides REST API endpoints for analysis decisions, trades, orders, and position
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+import os
 
 from api.routers import analysis, trades, orders, positions
 
@@ -22,10 +23,16 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS for local development
+# Configure CORS origins from environment variable
+# Default to localhost for development, but allow override for production/remote access
+cors_origins_env = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173")
+cors_origins = [origin.strip() for origin in cors_origins_env.split(",")]
+
+logger.info(f"CORS configured for origins: {cors_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],  # React dev servers
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
