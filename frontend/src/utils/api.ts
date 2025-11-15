@@ -27,17 +27,28 @@ export async function fetchAnalysesByDate(dateString: string): Promise<AnalysisD
 
 /**
  * Get image URL from NocoDB image format
- * @param imageData - NocoDB image array format: [{"path": "download/...", ...}]
+ * @param imageData - NocoDB image JSON string: '[{"path": "download/...", ...}]'
  * @returns Full URL to the image
  */
-export function getImageUrl(imageData: Array<{ path: string }>): string {
-  if (!imageData || imageData.length === 0 || !imageData[0].path) {
+export function getImageUrl(imageData: string): string {
+  if (!imageData) {
     return '';
   }
 
-  const NOCODB_BASE = import.meta.env.VITE_NOCODB_BASE_URL || 'http://localhost:8080';
-  const path = imageData[0].path;
+  try {
+    const parsedData: Array<{ path: string }> = JSON.parse(imageData);
 
-  // Ensure path doesn't start with / since it's already in the correct format
-  return `${NOCODB_BASE}/${path.startsWith('/') ? path.substring(1) : path}`;
+    if (!parsedData || parsedData.length === 0 || !parsedData[0].path) {
+      return '';
+    }
+
+    const NOCODB_BASE = import.meta.env.VITE_NOCODB_BASE_URL || 'http://localhost:8080';
+    const path = parsedData[0].path;
+
+    // Ensure path doesn't start with / since it's already in the correct format
+    return `${NOCODB_BASE}/${path.startsWith('/') ? path.substring(1) : path}`;
+  } catch (error) {
+    console.error('Failed to parse image data:', error);
+    return '';
+  }
 }
