@@ -24,12 +24,40 @@ export function SymbolDropdown({
     }
   };
 
+  if (inline) {
+    return (
+      <div className="flex items-center w-full">
+        <label className="hidden sm:inline text-sm font-medium text-gray-700 whitespace-nowrap mr-2">
+          Symbol
+        </label>
+        <div className="relative w-full">
+          <select
+            value={selectedSymbol || ''}
+            onChange={handleSymbolChange}
+            className="w-full pl-2 pr-7 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white truncate"
+            disabled={symbols.length === 0}
+          >
+            <option value="">
+              {symbols.length === 0 ? 'No symbols available' : 'Select a symbol'}
+            </option>
+            {symbols.map(symbol => (
+              <option key={symbol} value={symbol}>
+                {symbol}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-1 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`${inline ? 'w-full' : 'mb-4'} sm:flex sm:flex-row sm:items-center`}>
-      <label className="hidden sm:block text-sm font-medium text-gray-700 sm:w-32 sm:mr-3 sm:flex-shrink-0">
+    <div className="mb-4">
+      <label className="block text-sm font-medium text-gray-700 mb-1">
         Symbol
       </label>
-      <div className="relative sm:flex-1">
+      <div className="relative">
         <select
           value={selectedSymbol || ''}
           onChange={handleSymbolChange}
