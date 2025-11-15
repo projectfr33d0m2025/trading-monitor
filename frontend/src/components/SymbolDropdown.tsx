@@ -27,14 +27,14 @@ export function SymbolDropdown({
   if (inline) {
     return (
       <div className="flex items-center w-full min-w-0">
-        <label className="hidden sm:inline text-sm font-medium text-gray-700 whitespace-nowrap mr-2">
+        <label className="hidden sm:inline text-base font-medium text-gray-700 whitespace-nowrap mr-2">
           Symbol
         </label>
         <div className="relative w-full min-w-0">
           <select
             value={selectedSymbol || ''}
             onChange={handleSymbolChange}
-            className="w-full max-w-full pl-2 pr-7 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white truncate"
+            className="w-full max-w-full pl-2 pr-7 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white truncate"
             disabled={symbols.length === 0}
           >
             <option value="">
@@ -46,7 +46,7 @@ export function SymbolDropdown({
               </option>
             ))}
           </select>
-          <ChevronDown className="absolute right-1 top-1/2 transform -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
+          <ChevronDown className="absolute right-1 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
         </div>
       </div>
     );
