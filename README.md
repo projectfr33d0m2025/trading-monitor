@@ -1,339 +1,299 @@
-# Trading System Monitoring
+# Trading Monitor with UI Dashboard
 
-A Python-based trading system that monitors the complete trading lifecycle: **Analysis → Decision → Trade Plan → Order → Position**. This system integrates with n8n workflows, NocoDB for data persistence, and Alpaca API for order execution.
-
-## 🎯 Features
-
-- **Automated Order Execution**: Execute approved trading decisions daily at 9:45 AM ET
-- **Real-time Order Monitoring**: Track order status and manage stop-loss/take-profit orders
-- **Position Tracking**: Monitor open positions and calculate unrealized P&L
-- **Position Reconciliation**: Detect and reconcile positions closed outside the system
-- **Database Integration**: Direct PostgreSQL access underneath NocoDB
-- **Paper Trading Support**: Test with Alpaca paper trading before going live
-- **Comprehensive Testing**: In-memory PostgreSQL testing with `testing.postgresql`
-
-## 📋 Prerequisites
-
-- Python 3.9+
-- Alpaca Paper Trading account ([alpaca.markets](https://alpaca.markets))
-- NocoDB instance with access to underlying PostgreSQL database
-- PostgreSQL connection credentials
-
-## 🚀 Quick Start
-
-### 1. Clone and Install
-
-```bash
-# Clone the repository
-cd trading-monitor
-
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### 2. Configure Environment
-
-```bash
-# Copy example environment file
-cp .env.example .env
-
-# Edit .env and add your credentials
-nano .env
-```
-
-Required variables:
-- `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
-- `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`, `ALPACA_PAPER=true`
-
-### 3. Setup Database
-
-**Production (NocoDB):**
-```bash
-# Step 1: Manually add 4 fields to existing analysis_decision table in NocoDB UI
-# See docs/database-setup.md for detailed instructions
-
-# Step 2: Create new tables
-python scripts/create_production_tables.py
-```
-
-**Development (Docker):**
-```bash
-# Start PostgreSQL
-docker run --name trading-dev-db \
-  -e POSTGRES_PASSWORD=devpassword \
-  -e POSTGRES_DB=trading_dev \
-  -p 5432:5432 -d postgres:14-alpine
-
-# Create schema
-python -c "from db_layer import TradingDB; db = TradingDB(test_mode=True); db.create_schema(); print('Done')"
-```
-
-### 4. Run Programs
-
-```bash
-# Run individual programs
-python order_executor.py      # Execute trading decisions
-python order_monitor.py        # Monitor orders and place SL/TP
-python position_monitor.py     # Update position values
-
-# Run scheduler (all programs on schedule)
-python scheduler.py
-```
-
-### 5. Run Tests
-
-```bash
-# Run all tests
-pytest tests/ -v
-
-# Run with coverage
-pytest tests/ --cov=. --cov-report=html
-
-# Run specific test file
-pytest tests/test_db_layer.py -v
-```
+A comprehensive trading system with automated execution and a modern web-based dashboard for monitoring trades, positions, and analysis decisions.
 
 ## 📁 Project Structure
 
 ```
 trading-monitor/
-├── config.py                   # Configuration management
-├── db_layer.py                 # PostgreSQL abstraction layer
-├── alpaca_client.py            # Alpaca API helpers
-├── order_executor.py           # Execute trading decisions (runs at 9:45 AM ET)
-├── order_monitor.py            # Monitor orders, place SL/TP (every 5 min)
-├── position_monitor.py         # Update positions, P&L (every 10 min)
-├── scheduler.py                # APScheduler for all programs
-├── requirements.txt            # Python dependencies
-├── .env.example                # Environment template
-├── tests/                      # Test suite
-│   ├── conftest.py            # pytest fixtures
-│   ├── test_db_layer.py       # Database tests
-│   └── ...
-├── docs/                       # Documentation
-│   ├── database-setup.md      # Database setup guide
-│   └── n8n-workflow-modification.md
-├── scripts/                    # Utility scripts
-│   └── create_production_tables.py
-├── deployment/                 # Deployment configs
-└── alpaca_sample_responses/    # Alpaca API samples
+├── trading/              # Trading automation scripts
+│   ├── order_executor.py       # Executes approved trades
+│   ├── order_monitor.py        # Monitors order status
+│   ├── position_monitor.py     # Tracks position P&L
+│   ├── scheduler.py            # Runs scripts on schedule
+│   └── docs/                   # Trading system documentation
+│
+├── shared/               # Shared utilities
+│   ├── database.py             # Database connection
+│   ├── config.py               # Configuration
+│   └── models.py               # Pydantic data models
+│
+├── api/                  # FastAPI Backend
+│   ├── main.py                 # FastAPI application
+│   ├── routers/                # API endpoints
+│   │   ├── analysis.py         # Analysis decisions
+│   │   ├── trades.py           # Trade journal
+│   │   ├── orders.py           # Order execution
+│   │   └── positions.py        # Position tracking
+│   └── requirements.txt        # Python dependencies
+│
+├── frontend/             # React Dashboard
+│   ├── src/
+│   │   ├── pages/              # Page components
+│   │   │   ├── DashboardPage.tsx
+│   │   │   ├── AnalysisPage.tsx
+│   │   │   ├── TradeJournalPage.tsx
+│   │   │   ├── OrdersPage.tsx
+│   │   │   └── PositionsPage.tsx
+│   │   ├── lib/                # Utilities
+│   │   │   ├── api.ts          # API client
+│   │   │   └── types.ts        # TypeScript types
+│   │   └── App.tsx             # Main app component
+│   └── package.json            # Node dependencies
+│
+├── docker-compose.yml    # Docker orchestration
+└── .env                  # Environment variables
 ```
 
-## 🔄 Workflow Integration
+## 🚀 Quick Start
 
-### n8n Workflow 1 (Analysis & Decision)
+### Option 1: Docker Compose (Recommended)
 
-Your existing n8n workflow handles AI analysis and decision making. Modify it to populate 4 new fields in `analysis_decision` table:
+1. **Prerequisites**
+   - Docker and Docker Compose installed
+   - PostgreSQL database running (or use existing NocoDB setup)
 
-- `existing_order_id`
-- `existing_trade_journal_id`
-- `executed`
-- `execution_time`
+2. **Start all services**
+   ```bash
+   docker-compose up
+   ```
 
-See `docs/n8n-workflow-modification.md` for detailed instructions.
+3. **Access the dashboard**
+   - Frontend: http://localhost:3000
+   - API: http://localhost:8085
+   - API Docs: http://localhost:8085/docs
 
-### Python Programs (Workflows 2-4)
+### Option 2: Manual Setup
 
-1. **Order Executor** (Workflow 2): Executes approved decisions daily at 9:45 AM ET
-2. **Order Monitor** (Workflow 3): Syncs order status, places SL/TP orders
-3. **Position Monitor** (Workflow 4): Updates position values and P&L
+#### Backend API
 
-## 📊 Database Schema
+1. **Install Python dependencies**
+   ```bash
+   cd api
+   pip install -r requirements.txt
+   ```
 
-### Tables
+2. **Configure environment**
+   ```bash
+   # Copy .env.example to .env and update with your settings
+   cp .env.example .env
+   ```
 
-- **analysis_decision** (existing, modified): AI analysis and trade decisions
-- **trade_journal** (new): Individual trade tracking
-- **order_execution** (new): Order tracking (entry, SL, TP)
-- **position_tracking** (new): Real-time position monitoring
+3. **Run the API**
+   ```bash
+   # From project root
+   cd api
+   uvicorn main:app --reload
+   ```
 
-### Relationships
+   API will be available at http://localhost:8085
 
-Managed at application level (no foreign key constraints due to NocoDB limitation):
+#### Frontend Dashboard
 
-- `analysis_decision.existing_trade_journal_id` → `trade_journal.id`
-- `order_execution.trade_journal_id` → `trade_journal.id`
-- `position_tracking.trade_journal_id` → `trade_journal.id`
+1. **Install Node dependencies**
+   ```bash
+   cd frontend
+   npm install
+   ```
 
-See `docs/database-setup.md` for complete schema.
+2. **Run the development server**
+   ```bash
+   npm run dev
+   ```
 
-## ⏰ Schedule
+   Dashboard will be available at http://localhost:5173
 
-All times in US Eastern Time (NYSE trading hours):
+#### Trading Scripts
 
-| Program | Schedule | Purpose |
-|---------|----------|---------|
-| Order Executor | Once at 9:45 AM ET (Mon-Fri) | Execute approved decisions |
-| Order Monitor | Every 5 min (9:30 AM - 4:00 PM ET) + 6:00 PM | Monitor orders, place SL/TP |
-| Position Monitor | Every 10 min (9:30 AM - 4:00 PM ET) + 6:15 PM | Update positions, P&L |
+1. **Install Python dependencies**
+   ```bash
+   cd trading
+   pip install -r requirements.txt
+   ```
 
-## 🧪 Testing
+2. **Run individual scripts**
+   ```bash
+   # From trading directory
+   python order_executor.py
+   python order_monitor.py
+   python position_monitor.py
+   ```
 
-The project uses `testing.postgresql` for automated, in-memory testing:
+3. **Run scheduled automation**
+   ```bash
+   python scheduler.py
+   ```
 
-```bash
-# Install test dependencies
-pip install -r requirements.txt
+## 🎯 Features
 
-# Run tests (database created automatically)
-pytest tests/ -v
+### Dashboard Features
 
-# Run with coverage
-pytest tests/ --cov=. --cov-report=html --cov-report=term
-```
+- **📊 Overview Dashboard**
+  - Real-time statistics
+  - Pending analyses count
+  - Active trades count
+  - Unrealized P&L summary
+  - Recent active trades
 
-No manual PostgreSQL setup required! Tests use isolated in-memory instances.
+- **📈 Analysis Page**
+  - View AI-generated trading analysis with gradient summary cards
+  - Status breakdown (Pending, Approved, Executed)
+  - Filter by ticker, execution status, approval status
+  - Progressive disclosure with expandable cards
+  - Full analysis text, decision JSON, and chart visualization
+  - Icon-first design with status indicators
+  - Responsive mobile/desktop views
 
-## 🛠️ Configuration
+- **📋 Trade Journal**
+  - Complete trade lifecycle tracking
+  - Gradient summary cards showing status breakdown
+  - Filter by symbol, status, trade style
+  - P&L tracking with color-coded indicators
+  - Days open counter
+  - Progressive disclosure with expandable trade details
+  - Trade style badges (Swing, Trend)
+  - Icon-first design with status icons
+  - Responsive mobile/desktop views
+
+- **🛒 Order Execution**
+  - Monitor all order types with gradient summary cards
+  - Order type breakdown (Entry, Stop Loss, Take Profit)
+  - Order status breakdown (Pending, Filled, Cancelled)
+  - Filter by order type and status
+  - Progressive disclosure with expandable order details
+  - Fill price tracking with detailed timestamps
+  - Icon-first design (ShoppingCart, StopCircle, Trophy)
+  - Responsive mobile/desktop views
+
+- **💰 Position Tracking**
+  - Real-time position values with gradient summary cards
+  - Unrealized P&L calculation with color-coded indicators
+  - Market value and cost basis tracking
+  - Progressive disclosure with related orders
+  - Lazy loading of order details on expand
+  - Icon-first design with status indicators
+  - Responsive mobile/desktop views
+
+### API Endpoints
+
+#### Analysis Decisions
+- `GET /api/analysis` - List all analyses (with pagination & filters)
+- `GET /api/analysis/{id}` - Get single analysis
+- `GET /api/analysis/pending-approvals/list` - Get pending approvals
+- `GET /api/analysis/stats/summary` - Get analysis statistics (status & type breakdown)
+
+#### Trade Journal
+- `GET /api/trades` - List all trades (with pagination & filters)
+- `GET /api/trades/{id}` - Get single trade
+- `GET /api/trades/active/list` - Get active trades
+- `GET /api/trades/stats/summary` - Get trade statistics (status breakdown & P&L)
+
+#### Order Execution
+- `GET /api/orders` - List all orders (with pagination & filters)
+- `GET /api/orders/{id}` - Get single order
+- `GET /api/orders/trade/{trade_id}/list` - Get orders for a trade
+- `GET /api/orders/stats/summary` - Get order statistics (type & status breakdown)
+
+#### Position Tracking
+- `GET /api/positions` - List all positions (with pagination & filters)
+- `GET /api/positions/{id}` - Get single position
+- `GET /api/positions/pnl/summary` - Get P&L summary with aggregations
+
+## 🔧 Configuration
 
 ### Environment Variables
 
-See `.env.example` for all available variables.
+Create a `.env` file in the project root:
 
-### Trading Schedule
-
-Configurable via environment variables:
-- `TRADING_START_HOUR=9`
-- `TRADING_START_MINUTE=30`
-- `TRADING_END_HOUR=16`
-- `TRADING_END_MINUTE=0`
-
-### Paper Trading
-
-Set `ALPACA_PAPER=true` in `.env` to use paper trading (recommended for testing).
-
-## 📖 Documentation
-
-- [Database Setup](docs/database-setup.md) - Production and development database setup
-- [n8n Workflow Modification](docs/n8n-workflow-modification.md) - Integrate with n8n
-- [Trading System PRD](trading-monitor-prd.md) - Complete product requirements
-- [Implementation Tasks](tasks.md) - Detailed task breakdown
-
-## 🚨 Troubleshooting
-
-### "Database connection failed"
-
-Check your `.env` file has correct PostgreSQL credentials:
-```bash
+```env
+# PostgreSQL Configuration
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DB=nocodb
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=your_password
-```
+POSTGRES_SCHEMA=public
 
-### "Alpaca API credentials not configured"
-
-Ensure `.env` has your Alpaca API keys:
-```bash
-ALPACA_API_KEY=your_alpaca_paper_key
-ALPACA_SECRET_KEY=your_alpaca_paper_secret
+# Alpaca API Configuration
+ALPACA_API_KEY=your_api_key
+ALPACA_SECRET_KEY=your_secret_key
 ALPACA_PAPER=true
+
+# Trading Schedule (US Eastern Time)
+TRADING_START_HOUR=9
+TRADING_START_MINUTE=30
+TRADING_END_HOUR=16
+TRADING_END_MINUTE=0
 ```
 
-### Tests fail with PostgreSQL errors
+## 📱 Responsive Design
 
-Make sure `testing.postgresql` is installed:
-```bash
-pip install testing.postgresql
-```
+The dashboard is fully responsive and optimized for:
+- **Desktop** (1024px and above) - Full table views
+- **Tablet** (768px - 1023px) - Optimized layouts
+- **Mobile** (below 768px) - Card-based views
 
-### "No module named 'config'"
+## 🛠️ Development
 
-Ensure you're in the project root directory and virtual environment is activated:
-```bash
-cd /path/to/trading-monitor
-source venv/bin/activate
-python order_executor.py
-```
+### Tech Stack
 
-## 🔒 Security
+**Backend:**
+- FastAPI - Modern Python web framework
+- Pydantic - Data validation
+- psycopg2 - PostgreSQL adapter
+- Uvicorn - ASGI server
 
-- Never commit `.env` file (already in `.gitignore`)
-- Use paper trading for development and testing
-- Store production credentials securely
-- Limit database user permissions
-- Review all orders before switching to live trading
+**Frontend:**
+- React 18 - UI library
+- TypeScript - Type safety
+- Vite - Build tool
+- Tailwind CSS - Styling
+- React Router - Navigation
+- Lucide React - Icons
 
-## 📝 Development
+**Trading Automation:**
+- Alpaca API - Trading execution
+- APScheduler - Task scheduling
+- Python 3.9+ - Core language
 
-### Running Individual Programs
+### API Documentation
 
-```bash
-# Order Executor
-python order_executor.py
+Once the API is running, visit http://localhost:8085/docs for interactive API documentation powered by Swagger UI.
 
-# Order Monitor
-python order_monitor.py
+## 📊 Database Schema
 
-# Position Monitor
-python position_monitor.py
+The system uses 4 main tables:
 
-# Test Mode
-python order_executor.py --test-mode
-```
+1. **analysis_decision** - AI-generated trading analysis
+2. **trade_journal** - Complete trade lifecycle tracking
+3. **order_execution** - Order execution records
+4. **position_tracking** - Real-time position monitoring
 
-### Running Tests
+See `/trading/docs/` for detailed schema documentation.
 
-```bash
-# All tests
-pytest tests/ -v
+## 🔐 Security
 
-# Specific test file
-pytest tests/test_order_executor.py -v
+- No authentication required (local access only)
+- CORS enabled for localhost development
+- Environment variables for sensitive data
+- Database connection pooling
 
-# Specific test
-pytest tests/test_db_layer.py::test_insert_record -v
+## 📝 License
 
-# With coverage
-pytest tests/ --cov=. --cov-report=html
-```
+[Your License Here]
 
-### Database Operations
+## 🤝 Contributing
 
-```bash
-# Create schema (development)
-python -c "from db_layer import TradingDB; db = TradingDB(test_mode=True); db.create_schema()"
+1. Create a new branch (`git checkout -b feature/amazing-feature`)
+2. Make your changes
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-# Create production tables
-python scripts/create_production_tables.py
+## 📞 Support
 
-# Test database connection
-python -c "from db_layer import TradingDB; db = TradingDB(); print('Connected!')"
-```
-
-## 🚀 Deployment
-
-See `docs/production-deployment.md` (coming soon) for:
-- Server setup
-- Systemd service configuration (Linux)
-- LaunchAgent configuration (macOS)
-- Monitoring and logging
-- Production best practices
-
-## 📚 Additional Resources
-
-- [Alpaca API Documentation](https://docs.alpaca.markets/)
-- [Alpaca Python SDK](https://github.com/alpacahq/alpaca-py)
-- [APScheduler Documentation](https://apscheduler.readthedocs.io/)
-- [NocoDB Documentation](https://docs.nocodb.com/)
-
-## 📄 License
-
-This project is for personal/internal use. Review and test thoroughly before using with real money.
-
-## ⚠️ Disclaimer
-
-This software is for educational and research purposes. Trading involves risk. Always test with paper trading first. The authors are not responsible for any financial losses.
+For issues and questions, please open an issue on GitHub.
 
 ---
 
-**Status:** Production Ready (Paper Trading)
-
-**Last Updated:** 2025-10-26
-
-**Version:** 1.0.0
+**Built with ❤️ for automated trading**

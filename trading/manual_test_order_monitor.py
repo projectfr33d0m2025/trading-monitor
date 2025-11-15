@@ -15,12 +15,13 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-# Add tests directory to path to import conftest
+# Add tests directory and parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'tests'))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import testing.postgresql
 from conftest import MockAlpacaClient, MockAlpacaOrder
-from db_layer import TradingDB
+from shared.database import TradingDB
 from order_monitor import OrderMonitor
 
 

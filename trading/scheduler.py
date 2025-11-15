@@ -169,7 +169,9 @@ def main():
         logger.info(f"  • {job.name}")
         logger.info(f"    ID: {job.id}")
         logger.info(f"    Trigger: {job.trigger}")
-        logger.info(f"    Next run: {job.next_run_time}")
+        # Next run time is calculated after scheduler starts
+        next_run = getattr(job, 'next_run_time', 'Will be calculated on start')
+        logger.info(f"    Next run: {next_run}")
         logger.info("")
 
     logger.info("=" * 80)

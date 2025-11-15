@@ -8,10 +8,11 @@ import os
 import sys
 import uuid
 
-# Add parent directory to path for imports
+# Add parent directory and shared directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from db_layer import TradingDB
+from shared.database import TradingDB
 
 
 @pytest.fixture(scope='session')

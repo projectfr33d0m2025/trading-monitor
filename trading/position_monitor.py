@@ -7,7 +7,8 @@ import os
 import sys
 from dotenv import load_dotenv
 from alpaca.data.requests import StockLatestQuoteRequest
-from db_layer import TradingDB
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from shared.database import TradingDB
 from alpaca_client import get_trading_client, get_data_client, handle_alpaca_error
 import logging
 
@@ -100,7 +101,7 @@ class PositionMonitor:
                 return
 
             # Calculate metrics
-            qty = position['qty']
+            qty = position.get('qty_', position.get('qty'))  # Handle both NocoDB (qty_) and direct DB (qty)
             avg_entry = float(position['avg_entry_price'])
             market_value = current_price * qty
             cost_basis = float(position['cost_basis'])
@@ -112,7 +113,7 @@ class PositionMonitor:
                 SET current_price = %s,
                     market_value = %s,
                     unrealized_pnl = %s,
-                    last_updated = NOW()
+                    updated_at = NOW()
                 WHERE id = %s
             """, (current_price, market_value, unrealized_pnl, position['id']))
 
@@ -183,7 +184,8 @@ class PositionMonitor:
                 # Use the filled order data
                 order = orders[0]
                 exit_price = float(order['filled_avg_price'])
-                pnl = (exit_price - float(position['avg_entry_price'])) * position['qty']
+                qty = position.get('qty_', position.get('qty'))  # Handle both NocoDB (qty_) and direct DB (qty)
+                pnl = (exit_price - float(position['avg_entry_price'])) * qty
                 exit_reason = 'STOPPED_OUT' if order['order_type'] == 'STOP_LOSS' else 'TARGET_HIT'
 
                 logger.info(f"Found closing order: exit=${exit_price}, P&L=${pnl:.2f}, reason={exit_reason}")
