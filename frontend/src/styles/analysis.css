@@ -7,7 +7,6 @@
 
 /* Selector controls */
 .analysis-selectors {
-  display: flex;
   gap: 1rem;
 }
 
