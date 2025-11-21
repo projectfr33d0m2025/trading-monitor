@@ -126,7 +126,7 @@ async def get_pnl_summary():
         symbol_query = """
             SELECT
                 symbol,
-                qty_,
+                qty,
                 avg_entry_price,
                 current_price,
                 market_value,

@@ -69,7 +69,7 @@ export interface PositionTracking {
   id: number;
   trade_journal_id: number;
   symbol: string;
-  qty_: number; // NocoDB renamed qty to qty_
+  qty: number;
   avg_entry_price: number;
   current_price: number;
   market_value: number;

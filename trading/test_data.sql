@@ -348,7 +348,7 @@ INSERT INTO order_execution (
 
 -- Active position in position_tracking
 INSERT INTO position_tracking (
-    title, trade_journal_id, symbol, qty_, avg_entry_price,
+    title, trade_journal_id, symbol, qty, avg_entry_price,
     current_price, market_value, cost_basis, unrealized_pnl,
     stop_loss_order_id, take_profit_order_id, created_at, updated_at
 ) VALUES (
@@ -588,7 +588,7 @@ INSERT INTO order_execution (
 
 -- Active position
 INSERT INTO position_tracking (
-    title, trade_journal_id, symbol, qty_, avg_entry_price,
+    title, trade_journal_id, symbol, qty, avg_entry_price,
     current_price, market_value, cost_basis, unrealized_pnl,
     stop_loss_order_id, take_profit_order_id, created_at, updated_at
 ) VALUES (
@@ -823,7 +823,7 @@ INSERT INTO order_execution (
 
 -- Position with old timestamp (stale data - last updated 3 days ago)
 INSERT INTO position_tracking (
-    title, trade_journal_id, symbol, qty_, avg_entry_price,
+    title, trade_journal_id, symbol, qty, avg_entry_price,
     current_price, market_value, cost_basis, unrealized_pnl,
     stop_loss_order_id, take_profit_order_id, created_at, updated_at
 ) VALUES (
@@ -939,7 +939,7 @@ INSERT INTO order_execution (
 );
 
 INSERT INTO position_tracking (
-    title, trade_journal_id, symbol, qty_, avg_entry_price,
+    title, trade_journal_id, symbol, qty, avg_entry_price,
     current_price, market_value, cost_basis, unrealized_pnl,
     stop_loss_order_id, take_profit_order_id, created_at, updated_at
 ) VALUES (
@@ -1023,7 +1023,7 @@ INSERT INTO order_execution (
 );
 
 INSERT INTO position_tracking (
-    title, trade_journal_id, symbol, qty_, avg_entry_price,
+    title, trade_journal_id, symbol, qty, avg_entry_price,
     current_price, market_value, cost_basis, unrealized_pnl,
     stop_loss_order_id, take_profit_order_id, created_at, updated_at
 ) VALUES (
@@ -1161,7 +1161,7 @@ INSERT INTO order_execution (
 );
 
 INSERT INTO position_tracking (
-    title, trade_journal_id, symbol, qty_, avg_entry_price,
+    title, trade_journal_id, symbol, qty, avg_entry_price,
     current_price, market_value, cost_basis, unrealized_pnl,
     stop_loss_order_id, take_profit_order_id, created_at, updated_at
 ) VALUES (
@@ -1245,7 +1245,7 @@ INSERT INTO order_execution (
 );
 
 INSERT INTO position_tracking (
-    title, trade_journal_id, symbol, qty_, avg_entry_price,
+    title, trade_journal_id, symbol, qty, avg_entry_price,
     current_price, market_value, cost_basis, unrealized_pnl,
     stop_loss_order_id, take_profit_order_id, created_at, updated_at
 ) VALUES (

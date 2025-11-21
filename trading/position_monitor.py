@@ -101,7 +101,7 @@ class PositionMonitor:
                 return
 
             # Calculate metrics
-            qty = position.get('qty_', position.get('qty'))  # Handle both NocoDB (qty_) and direct DB (qty)
+            qty = position['qty']
             avg_entry = float(position['avg_entry_price'])
             market_value = current_price * qty
             cost_basis = float(position['cost_basis'])
@@ -184,7 +184,7 @@ class PositionMonitor:
                 # Use the filled order data
                 order = orders[0]
                 exit_price = float(order['filled_avg_price'])
-                qty = position.get('qty_', position.get('qty'))  # Handle both NocoDB (qty_) and direct DB (qty)
+                qty = position['qty']
                 pnl = (exit_price - float(position['avg_entry_price'])) * qty
                 exit_reason = 'STOPPED_OUT' if order['order_type'] == 'STOP_LOSS' else 'TARGET_HIT'
 

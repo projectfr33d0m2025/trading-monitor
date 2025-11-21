@@ -89,7 +89,7 @@ class PositionTracking(BaseModel):
     id: int
     trade_journal_id: int
     symbol: str
-    qty_: int  # NocoDB renamed qty to qty_
+    qty: int
     avg_entry_price: Decimal
     current_price: Decimal
     market_value: Decimal

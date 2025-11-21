@@ -174,7 +174,7 @@ class OrderMonitor:
             cost_basis = filled_price * filled_qty_actual  # Use actual qty for accurate cost basis
             self.db.execute_query("""
                 INSERT INTO position_tracking (
-                    trade_journal_id, symbol, qty_, avg_entry_price,
+                    trade_journal_id, symbol, qty, avg_entry_price,
                     current_price, market_value, cost_basis,
                     unrealized_pnl
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
