@@ -85,8 +85,32 @@ export default function TradeJournalPage() {
         api.getTradeStats(),
       ]);
 
-      // Apply client-side filtering
-      let filteredTrades = tradesData.data;
+      // Fetch positions for trades on current page
+      let positionsMap = new Map<number, PositionTracking>();
+      try {
+        const tradeJournalIds = tradesData.data.map(trade => trade.id);
+        const positionsData = await api.getPositions({
+          page: 1,
+          page_size: 100
+        });
+
+        positionsMap = new Map(
+          positionsData.data
+            .filter(pos => tradeJournalIds.includes(pos.trade_journal_id))
+            .map(pos => [pos.trade_journal_id, pos])
+        );
+      } catch (posErr) {
+        console.warn('Failed to fetch positions:', posErr);
+      }
+
+      // Join positions to trades
+      const tradesWithPositions = tradesData.data.map(trade => ({
+        ...trade,
+        position: positionsMap.get(trade.id)
+      }));
+
+      // Apply client-side filtering to trades with positions
+      let filteredTrades = tradesWithPositions;
 
       // Filter by status for PENDING_ACTIVE
       if (filterStatus === 'PENDING_ACTIVE') {
@@ -138,9 +162,9 @@ export default function TradeJournalPage() {
           // Fetch orders for this trade
           const ordersData = await api.getOrdersByTrade(tradeJournalId);
 
-          // Fetch position data if it's an active position
-          let positionData: PositionTracking | undefined = undefined;
-          if (status === 'POSITION') {
+          // Fetch position data if it's an active position and not already loaded
+          let positionData: PositionTracking | undefined = trade.position;
+          if (status === 'POSITION' && !trade.position) {
             try {
               const positionsData = await api.getPositions({ page: 1, page_size: 100 });
               positionData = positionsData.data.find((p) => p.trade_journal_id === tradeJournalId);
