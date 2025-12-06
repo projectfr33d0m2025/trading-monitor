@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 import os
 
-from api.routers import analysis, trades, orders, positions
+from api.routers import analysis, trades, orders, positions, analytics
 
 # Configure logging
 logging.basicConfig(
@@ -43,6 +43,7 @@ app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
 app.include_router(trades.router, prefix="/api/trades", tags=["trades"])
 app.include_router(orders.router, prefix="/api/orders", tags=["orders"])
 app.include_router(positions.router, prefix="/api/positions", tags=["positions"])
+app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
 
 
 @app.get("/")

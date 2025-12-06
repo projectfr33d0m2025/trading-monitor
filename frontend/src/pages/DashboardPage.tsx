@@ -2,6 +2,17 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BarChart3, FileText, TrendingUp, TrendingDown, Clock } from 'lucide-react';
 import { api } from '../lib/api';
+import type { DateRange, PerformanceMetrics, EquityCurveDataPoint, PositionBreakdown, PnLByPeriodDataPoint, PatternPerformance, TradeDistributionBucket, StylePerformance, DurationAnalysisDataPoint } from '../types/analytics';
+import { getEquityCurve, getPerformanceMetrics, getPositionBreakdown, getPnLByPeriod, getPatternPerformance, getTradeDistribution, getStylePerformance, getDurationAnalysis } from '../api/analytics';
+import { DateRangeFilter } from '../components/filters/DateRangeFilter';
+import { PerformanceMetricsCards } from '../components/analytics/PerformanceMetricsCards';
+import { EquityCurveChart } from '../components/analytics/EquityCurveChart';
+import { PositionPnLChart } from '../components/analytics/PositionPnLChart';
+import { PnLBarChart } from '../components/analytics/PnLBarChart';
+import { PatternPerformanceTable } from '../components/analytics/PatternPerformanceTable';
+import { TradeDistributionChart } from '../components/analytics/TradeDistributionChart';
+import { StylePerformanceCards } from '../components/analytics/StylePerformanceCards';
+import { DurationAnalysisChart } from '../components/analytics/DurationAnalysisChart';
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -14,9 +25,33 @@ export default function DashboardPage() {
     recentTrades: [],
   });
 
+  // Analytics state
+  const [dateRange, setDateRange] = useState<DateRange>({
+    start_date: null,
+    end_date: new Date().toISOString().split('T')[0],
+    preset: 'all',
+  });
+  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics | null>(null);
+  const [equityCurve, setEquityCurve] = useState<EquityCurveDataPoint[]>([]);
+  const [positionBreakdown, setPositionBreakdown] = useState<PositionBreakdown[]>([]);
+  const [dailyPnL, setDailyPnL] = useState<PnLByPeriodDataPoint[]>([]);
+  const [weeklyPnL, setWeeklyPnL] = useState<PnLByPeriodDataPoint[]>([]);
+  const [monthlyPnL, setMonthlyPnL] = useState<PnLByPeriodDataPoint[]>([]);
+  const [patternPerformance, setPatternPerformance] = useState<PatternPerformance[]>([]);
+  const [tradeDistribution, setTradeDistribution] = useState<TradeDistributionBucket[]>([]);
+  const [stylePerformance, setStylePerformance] = useState<StylePerformance[]>([]);
+  const [durationAnalysis, setDurationAnalysis] = useState<DurationAnalysisDataPoint[]>([]);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+
   useEffect(() => {
     fetchDashboardData();
+    fetchAnalyticsData();
   }, []);
+
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [dateRange]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -41,6 +76,57 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchAnalyticsData = async () => {
+    setAnalyticsLoading(true);
+    setAnalyticsError(null);
+    try {
+      const [
+        metricsRes,
+        equityCurveRes,
+        positionsRes,
+        dailyRes,
+        weeklyRes,
+        monthlyRes,
+        patternRes,
+        distributionRes,
+        styleRes,
+        durationRes,
+      ] = await Promise.all([
+        getPerformanceMetrics(dateRange.start_date, dateRange.end_date),
+        getEquityCurve(dateRange.start_date, dateRange.end_date),
+        getPositionBreakdown(),
+        getPnLByPeriod('daily', dateRange.start_date, dateRange.end_date),
+        getPnLByPeriod('weekly', dateRange.start_date, dateRange.end_date),
+        getPnLByPeriod('monthly', dateRange.start_date, dateRange.end_date),
+        getPatternPerformance(dateRange.start_date, dateRange.end_date),
+        getTradeDistribution(dateRange.start_date, dateRange.end_date),
+        getStylePerformance(dateRange.start_date, dateRange.end_date),
+        getDurationAnalysis(dateRange.start_date, dateRange.end_date),
+      ]);
+
+      setPerformanceMetrics(metricsRes.metrics);
+      setEquityCurve(equityCurveRes.data);
+      setPositionBreakdown(positionsRes.data);
+      setDailyPnL(dailyRes.data);
+      setWeeklyPnL(weeklyRes.data);
+      setMonthlyPnL(monthlyRes.data);
+      setPatternPerformance(patternRes.data);
+      setTradeDistribution(distributionRes.data);
+      setStylePerformance(styleRes.data);
+      setDurationAnalysis(durationRes.data);
+    } catch (err) {
+      console.error('Failed to fetch analytics data:', err);
+      setAnalyticsError('Failed to load analytics data. Please try refreshing.');
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchDashboardData();
+    fetchAnalyticsData();
   };
 
   const formatCurrency = (value?: number | string | null) => {
@@ -73,6 +159,20 @@ export default function DashboardPage() {
           Overview of your trading activities and performance
         </p>
       </div>
+
+      {/* Date Range Filter */}
+      <DateRangeFilter
+        selectedRange={dateRange}
+        onRangeChange={setDateRange}
+        onRefresh={handleRefresh}
+      />
+
+      {/* Performance Metrics Cards */}
+      <PerformanceMetricsCards
+        metrics={performanceMetrics}
+        loading={analyticsLoading}
+        error={analyticsError}
+      />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -144,6 +244,57 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Equity Curve Chart */}
+      <EquityCurveChart
+        data={equityCurve}
+        loading={analyticsLoading}
+        error={analyticsError}
+      />
+
+      {/* Two-column layout: Position P&L + P&L by Period */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <PositionPnLChart
+          data={positionBreakdown}
+          loading={analyticsLoading}
+          error={analyticsError}
+        />
+        <PnLBarChart
+          dailyData={dailyPnL}
+          weeklyData={weeklyPnL}
+          monthlyData={monthlyPnL}
+          loading={analyticsLoading}
+          error={analyticsError}
+        />
+      </div>
+
+      {/* Pattern Performance Table */}
+      <PatternPerformanceTable
+        data={patternPerformance}
+        loading={analyticsLoading}
+        error={analyticsError}
+      />
+
+      {/* Trade Distribution Histogram */}
+      <TradeDistributionChart
+        data={tradeDistribution}
+        loading={analyticsLoading}
+        error={analyticsError}
+      />
+
+      {/* Style Performance Comparison */}
+      <StylePerformanceCards
+        data={stylePerformance}
+        loading={analyticsLoading}
+        error={analyticsError}
+      />
+
+      {/* Duration Analysis */}
+      <DurationAnalysisChart
+        data={durationAnalysis}
+        loading={analyticsLoading}
+        error={analyticsError}
+      />
 
       {/* Trade Statistics */}
       {stats.tradeStats && (
