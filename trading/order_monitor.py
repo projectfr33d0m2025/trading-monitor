@@ -49,10 +49,10 @@ class OrderMonitor:
             logger.info("Order Monitor Starting")
             logger.info("=" * 60)
 
-            # Get active orders (pending or partially_filled)
+            # Get orders to monitor (active + terminal statuses that may need trade status update)
             orders = self.db.execute_query("""
                 SELECT * FROM order_execution
-                WHERE order_status IN ('pending', 'partially_filled', 'new', 'accepted')
+                WHERE order_status IN ('pending', 'partially_filled', 'new', 'accepted', 'expired', 'cancelled', 'rejected')
                 ORDER BY created_at ASC
             """)
 
@@ -86,7 +86,7 @@ class OrderMonitor:
             alpaca_order = self.alpaca.get_order_by_id(alpaca_order_id)
 
             # Map Alpaca status to our status
-            # Alpaca statuses: new, accepted, pending_new, filled, partially_filled, canceled, rejected, etc.
+            # Alpaca statuses: new, accepted, pending_new, filled, partially_filled, canceled, rejected, expired, etc.
             status_map = {
                 'new': 'pending',
                 'accepted': 'pending',
@@ -94,7 +94,8 @@ class OrderMonitor:
                 'filled': 'filled',
                 'partially_filled': 'partially_filled',
                 'canceled': 'cancelled',
-                'rejected': 'rejected'
+                'rejected': 'cancelled',
+                'expired': 'cancelled'
             }
             our_status = status_map.get(alpaca_order.status, alpaca_order.status)
 
@@ -126,10 +127,51 @@ class OrderMonitor:
             elif our_status == 'filled' and order['order_type'] in ('STOP_LOSS', 'TAKE_PROFIT'):
                 self.handle_exit_filled(order, alpaca_order)
 
+            # Handle cancelled/expired/rejected entry orders
+            elif our_status == 'cancelled' and order['order_type'] == 'ENTRY':
+                self.handle_cancelled_entry_order(order, our_status)
+
         except Exception as e:
             error_msg = handle_alpaca_error(e, f"syncing order {alpaca_order_id}")
             logger.error(f"Error syncing order: {error_msg}")
             # Continue to next order instead of crashing
+
+    def handle_cancelled_entry_order(self, order, our_status):
+        """
+        Handle entry orders that were cancelled/expired/rejected.
+        These should transition the trade from ORDERED to CANCELLED.
+
+        Args:
+            order (dict): Order execution record from database
+            our_status (str): The cancelled/rejected/expired status
+        """
+        trade_journal_id = order['trade_journal_id']
+
+        try:
+            # Get current trade status
+            trade = self.db.execute_query("""
+                SELECT status FROM trade_journal WHERE id = %s
+            """, (trade_journal_id,))[0]
+
+            # Only update if trade is still in ORDERED status
+            if trade['status'] == 'ORDERED':
+                logger.info(f"Entry order {our_status} for trade {trade_journal_id}, updating to CANCELLED")
+
+                # Update trade_journal to CANCELLED
+                self.db.execute_query("""
+                    UPDATE trade_journal
+                    SET status = 'CANCELLED',
+                        updated_at = NOW()
+                    WHERE id = %s
+                """, (trade_journal_id,))
+
+                logger.info(f"✅ Trade {trade_journal_id} cancelled due to {our_status} entry order")
+            else:
+                logger.info(f"Trade {trade_journal_id} already in {trade['status']} status, skipping cancellation")
+
+        except Exception as e:
+            logger.error(f"Error handling cancelled entry order: {e}", exc_info=True)
+            raise
 
     def handle_entry_filled(self, order, alpaca_order):
         """
