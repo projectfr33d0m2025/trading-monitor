@@ -12,7 +12,21 @@ import type {
   TradeDistributionResponse,
 } from '../types/analytics';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8085';
+// Determine API base URL dynamically
+const getApiBaseUrl = (): string => {
+  // Use environment variable if provided
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  // Otherwise, construct based on current hostname
+  // This allows the app to work when accessed from any IP/domain
+  const protocol = window.location.protocol;
+  const hostname = window.location.hostname;
+  return `${protocol}//${hostname}:8085`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 interface QueryParams {
   start_date?: string | null;
