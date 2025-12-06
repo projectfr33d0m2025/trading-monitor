@@ -82,8 +82,7 @@ trading-monitor/
 3. **Run the API**
    ```bash
    # From project root
-   cd api
-   uvicorn main:app --reload
+   uvicorn api.main:app --reload
    ```
 
    API will be available at http://localhost:8085
