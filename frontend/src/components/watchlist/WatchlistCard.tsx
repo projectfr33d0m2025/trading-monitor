@@ -12,13 +12,13 @@ export default function WatchlistCard({ ticker, onEdit, onDelete }: WatchlistCar
     <div className="bg-white rounded-lg shadow border border-gray-200 p-4 hover:shadow-md transition-shadow">
       {/* Header with Ticker and Actions */}
       <div className="flex items-start justify-between mb-3">
-        <div>
+        <div className="flex items-baseline gap-2 flex-wrap">
           <h3 className="text-xl font-bold text-gray-900">{ticker.Ticker}</h3>
           {ticker.Ticker_Name && (
-            <p className="text-sm text-gray-600 mt-1">{ticker.Ticker_Name}</p>
+            <p className="text-sm text-gray-600">{ticker.Ticker_Name}</p>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <button
             onClick={() => onEdit(ticker)}
             className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
