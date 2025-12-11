@@ -25,6 +25,7 @@ export default function TickerAutocomplete({
   const debounceTimer = useRef<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const justSelectedRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Debounced search
   useEffect(() => {
@@ -45,27 +46,52 @@ export default function TickerAutocomplete({
       clearTimeout(debounceTimer.current);
     }
 
+    // Cancel any in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
     // Set new timer
     debounceTimer.current = setTimeout(async () => {
       setIsSearching(true);
       setSearchError(null);
 
+      // Create new AbortController for this request
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       try {
-        const assets = await api.searchTickers(value, 10);
-        setResults(assets);
-        setShowDropdown(true);
+        const assets = await api.searchTickers(value, 10, controller.signal);
+
+        // Only update state if request wasn't aborted
+        if (!controller.signal.aborted) {
+          setResults(assets);
+          setShowDropdown(true);
+        }
       } catch (err) {
+        // Don't show error UI for aborted requests
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.log('Search request cancelled');
+          return;
+        }
+
         console.error('Ticker search error:', err);
         setSearchError('Failed to search tickers. Please try again.');
         setResults([]);
       } finally {
-        setIsSearching(false);
+        if (!controller.signal.aborted) {
+          setIsSearching(false);
+        }
       }
     }, 300); // 300ms debounce
 
     return () => {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
+      }
+      // Cancel in-flight request on unmount or dependency change
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
     };
   }, [value]);

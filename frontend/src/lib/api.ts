@@ -32,8 +32,13 @@ const getApiBaseUrl = (): string => {
 const API_BASE_URL = getApiBaseUrl();
 
 class ApiClient {
-  private async fetchAPI<T>(endpoint: string): Promise<T> {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+  private async fetchAPI<T>(
+    endpoint: string,
+    signal?: AbortSignal
+  ): Promise<T> {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      signal
+    });
 
     if (!response.ok) {
       throw new Error(`API Error: ${response.statusText}`);
@@ -211,13 +216,17 @@ class ApiClient {
     return this.fetchAPI(`/watchlist/${tickerId}`);
   }
 
-  async searchTickers(query: string, limit?: number): Promise<AlpacaAsset[]> {
+  async searchTickers(
+    query: string,
+    limit?: number,
+    signal?: AbortSignal
+  ): Promise<AlpacaAsset[]> {
     const searchParams = new URLSearchParams();
     searchParams.set('q', query);
     if (limit) searchParams.set('limit', limit.toString());
 
     const queryString = searchParams.toString();
-    return this.fetchAPI(`/watchlist/search-ticker/alpaca?${queryString}`);
+    return this.fetchAPI(`/watchlist/search-ticker/alpaca?${queryString}`, signal);
   }
 
   async createWatchlistTicker(data: CreateTickerData): Promise<TickerWatchlist> {
