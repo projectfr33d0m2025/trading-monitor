@@ -9,6 +9,10 @@ import type {
   OrderExecution,
   PositionTracking,
   PaginatedResponse,
+  TickerWatchlist,
+  AlpacaAsset,
+  CreateTickerData,
+  UpdateTickerData,
 } from './types';
 
 // Determine API base URL dynamically
@@ -180,6 +184,82 @@ class ApiClient {
 
   async getPnLSummary(): Promise<any> {
     return this.fetchAPI('/positions/pnl/summary');
+  }
+
+  // Watchlist endpoints
+  async getWatchlist(params?: {
+    page?: number;
+    page_size?: number;
+    exchange?: string;
+    industry?: string;
+    active?: boolean;
+    search?: string;
+  }): Promise<PaginatedResponse<TickerWatchlist>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.exchange) searchParams.set('exchange', params.exchange);
+    if (params?.industry) searchParams.set('industry', params.industry);
+    if (params?.active !== undefined) searchParams.set('active', params.active.toString());
+    if (params?.search) searchParams.set('search', params.search);
+
+    const query = searchParams.toString();
+    return this.fetchAPI(`/watchlist${query ? `?${query}` : ''}`);
+  }
+
+  async getWatchlistTicker(tickerId: number): Promise<TickerWatchlist> {
+    return this.fetchAPI(`/watchlist/${tickerId}`);
+  }
+
+  async searchTickers(query: string, limit?: number): Promise<AlpacaAsset[]> {
+    const searchParams = new URLSearchParams();
+    searchParams.set('q', query);
+    if (limit) searchParams.set('limit', limit.toString());
+
+    const queryString = searchParams.toString();
+    return this.fetchAPI(`/watchlist/search-ticker/alpaca?${queryString}`);
+  }
+
+  async createWatchlistTicker(data: CreateTickerData): Promise<TickerWatchlist> {
+    const response = await fetch(`${API_BASE_URL}/watchlist`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async updateWatchlistTicker(tickerId: number, data: UpdateTickerData): Promise<TickerWatchlist> {
+    const response = await fetch(`${API_BASE_URL}/watchlist/${tickerId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async deleteWatchlistTicker(tickerId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/watchlist/${tickerId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.statusText}`);
+    }
+  }
+
+  async getWatchlistStats(): Promise<{ total: number; active: number; inactive: number }> {
+    return this.fetchAPI('/watchlist/stats/summary');
   }
 }
 

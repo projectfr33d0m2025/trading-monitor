@@ -6,6 +6,8 @@ import os
 import sys
 import logging
 from alpaca.trading.client import TradingClient
+from alpaca.trading.requests import GetAssetsRequest
+from alpaca.trading.enums import AssetClass, AssetStatus
 from alpaca.data.historical import StockHistoricalDataClient
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from shared.config import ALPACA_API_KEY, ALPACA_SECRET_KEY, ALPACA_PAPER
@@ -100,3 +102,56 @@ def handle_alpaca_error(error, operation):
         logger.warning("Insufficient buying power or position not found")
 
     return error_msg
+
+
+def search_tickers(query: str, limit: int = 10):
+    """
+    Search Alpaca tradable assets by symbol or name
+
+    Args:
+        query (str): Search query (symbol or company name)
+        limit (int): Maximum number of results to return (default: 10)
+
+    Returns:
+        list: List of matching assets with symbol, name, exchange, asset_class, tradable
+
+    Raises:
+        Exception: If Alpaca API call fails
+    """
+    try:
+        client = get_trading_client()
+
+        # Create request to get all active US equity assets
+        request = GetAssetsRequest(
+            asset_class=AssetClass.US_EQUITY,
+            status=AssetStatus.ACTIVE
+        )
+
+        assets = client.get_all_assets(filter=request)
+
+        # Filter by query (symbol or name contains query, case-insensitive)
+        query_upper = query.upper()
+        query_lower = query.lower()
+
+        matches = []
+        for asset in assets:
+            # Check if query matches symbol or name
+            if query_upper in asset.symbol or query_lower in asset.name.lower():
+                matches.append({
+                    'symbol': asset.symbol,
+                    'name': asset.name,
+                    'exchange': asset.exchange.value if hasattr(asset.exchange, 'value') else str(asset.exchange),
+                    'asset_class': asset.asset_class.value if hasattr(asset.asset_class, 'value') else str(asset.asset_class),
+                    'tradable': asset.tradable
+                })
+
+                # Stop if we reached the limit
+                if len(matches) >= limit:
+                    break
+
+        logger.info(f"Found {len(matches)} assets matching '{query}'")
+        return matches
+
+    except Exception as e:
+        error_msg = handle_alpaca_error(e, f"ticker search for '{query}'")
+        raise Exception(error_msg)

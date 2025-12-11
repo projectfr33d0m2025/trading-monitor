@@ -114,7 +114,8 @@ class TradingDB:
         Returns:
             int: ID of inserted record
         """
-        columns = ', '.join(data.keys())
+        # Quote column names to preserve case sensitivity in PostgreSQL
+        columns = ', '.join([f'"{col}"' for col in data.keys()])
         placeholders = ', '.join(['%s'] * len(data))
         query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders}) RETURNING id"
 
@@ -140,7 +141,8 @@ class TradingDB:
         Returns:
             bool: True if record was updated
         """
-        set_clause = ', '.join([f"{k} = %s" for k in data.keys()])
+        # Quote column names to preserve case sensitivity in PostgreSQL
+        set_clause = ', '.join([f'"{k}" = %s' for k in data.keys()])
         query = f"UPDATE {table} SET {set_clause} WHERE id = %s"
         params = tuple(data.values()) + (record_id,)
 

@@ -90,3 +90,36 @@ export interface PaginatedResponse<T> {
 export type TradeStatus = 'ORDERED' | 'POSITION' | 'CLOSED' | 'CANCELLED';
 export type OrderType = 'ENTRY' | 'STOP_LOSS' | 'TAKE_PROFIT';
 export type OrderStatus = 'pending' | 'filled' | 'cancelled' | 'partially_filled';
+
+export interface TickerWatchlist {
+  id: number;
+  Ticker: string;
+  Ticker_Name?: string;
+  Exchange?: string;
+  Industry?: string;
+  Active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AlpacaAsset {
+  symbol: string;
+  name: string;
+  exchange: string;
+  asset_class: string;
+  tradable: boolean;
+}
+
+export interface CreateTickerData {
+  Ticker: string;
+  Ticker_Name: string;  // Required - from Alpaca
+  Exchange: string;  // Required - from Alpaca
+  Industry?: string;
+  Active: boolean;
+}
+
+export interface UpdateTickerData {
+  // Ticker and Exchange cannot be updated
+  Industry?: string;
+  Active?: boolean;
+}

@@ -130,3 +130,48 @@ class OrderListResponse(PaginatedResponse):
 class PositionListResponse(PaginatedResponse):
     """Paginated list of positions"""
     data: list[PositionTracking]
+
+
+class TickerWatchlist(BaseModel):
+    """Ticker watchlist entry"""
+    id: int
+    Ticker: str
+    Ticker_Name: Optional[str] = None
+    Exchange: Optional[str] = None
+    Industry: Optional[str] = None
+    Active: bool = True
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class CreateTickerWatchlist(BaseModel):
+    """Create ticker watchlist entry"""
+    Ticker: str
+    Ticker_Name: str  # Required - comes from Alpaca
+    Exchange: str  # Required - comes from Alpaca
+    Industry: Optional[str] = None
+    Active: bool = True
+
+
+class UpdateTickerWatchlist(BaseModel):
+    """Update ticker watchlist entry"""
+    # Ticker and Exchange cannot be updated (locked to Alpaca data)
+    Industry: Optional[str] = None
+    Active: Optional[bool] = None
+
+
+class WatchlistListResponse(PaginatedResponse):
+    """Paginated list of watchlist tickers"""
+    data: list[TickerWatchlist]
+
+
+class AlpacaAsset(BaseModel):
+    """Alpaca asset for ticker search"""
+    symbol: str
+    name: str
+    exchange: str
+    asset_class: str
+    tradable: bool

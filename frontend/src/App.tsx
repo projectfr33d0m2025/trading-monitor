@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
-import { BarChart3, FileText, Home, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BarChart3, FileText, Home, Menu, X, ChevronLeft, ChevronRight, List } from 'lucide-react';
 import AnalysisPage from './pages/AnalysisPage';
 import TradeJournalPage from './pages/TradeJournalPage';
 import DashboardPage from './pages/DashboardPage';
+import WatchlistPage from './pages/WatchlistPage';
 
 function Navigation() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -66,6 +67,7 @@ function Navigation() {
             <NavItem to="/" icon={Home} label="Dashboard" />
             <NavItem to="/analysis" icon={BarChart3} label="Analysis" />
             <NavItem to="/trades" icon={FileText} label="Trades" />
+            <NavItem to="/watchlist" icon={List} label="Watchlist" />
           </nav>
         </div>
       </div>
@@ -100,6 +102,7 @@ function Navigation() {
           <NavItem to="/" icon={Home} label="Dashboard" />
           <NavItem to="/analysis" icon={BarChart3} label="Analysis" />
           <NavItem to="/trades" icon={FileText} label="Trades" />
+          <NavItem to="/watchlist" icon={List} label="Watchlist" />
         </nav>
       </div>
     </>
@@ -118,6 +121,7 @@ function App() {
               <Route path="/" element={<DashboardPage />} />
               <Route path="/analysis" element={<AnalysisPage />} />
               <Route path="/trades" element={<TradeJournalPage />} />
+              <Route path="/watchlist" element={<WatchlistPage />} />
             </Routes>
           </main>
         </div>
