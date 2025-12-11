@@ -63,6 +63,11 @@ export default function AddTickerModal({ isOpen, onClose, onSuccess }: AddTicker
       return;
     }
 
+    if (!industry) {
+      setError('Please select an industry');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -70,7 +75,7 @@ export default function AddTickerModal({ isOpen, onClose, onSuccess }: AddTicker
         Ticker: selectedTicker,
         Ticker_Name: selectedTickerName,
         Exchange: selectedExchange,
-        Industry: industry || undefined,
+        Industry: industry,
         Active: active
       });
 
@@ -180,7 +185,7 @@ export default function AddTickerModal({ isOpen, onClose, onSuccess }: AddTicker
           {/* Industry - Dropdown */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Industry
+              Industry <span className="text-red-500">*</span>
             </label>
             <select
               value={industry}
@@ -188,7 +193,7 @@ export default function AddTickerModal({ isOpen, onClose, onSuccess }: AddTicker
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               disabled={isSubmitting}
             >
-              <option value="">Select industry (optional)</option>
+              <option value="">Select industry</option>
               {COMMON_INDUSTRIES.map((ind) => (
                 <option key={ind} value={ind}>
                   {ind}

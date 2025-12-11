@@ -12,6 +12,7 @@ interface EditTickerModalProps {
 
 const COMMON_INDUSTRIES = [
   'Technology',
+  'Semiconductor',
   'Finance',
   'Healthcare',
   'Energy',
@@ -34,7 +35,7 @@ export default function EditTickerModal({ ticker, isOpen, onClose, onSuccess }: 
   // Initialize form with ticker data
   useEffect(() => {
     if (ticker) {
-      setIndustry(ticker.Industry || '');
+      setIndustry(ticker.Industry);
       setActive(ticker.Active);
       setError(null);
     }
@@ -45,11 +46,17 @@ export default function EditTickerModal({ ticker, isOpen, onClose, onSuccess }: 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!industry) {
+      setError('Please select an industry');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       await api.updateWatchlistTicker(ticker.id, {
-        Industry: industry || undefined,
+        Industry: industry,
         Active: active
       });
 
@@ -131,7 +138,7 @@ export default function EditTickerModal({ ticker, isOpen, onClose, onSuccess }: 
           {/* Industry - Editable */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Industry
+              Industry <span className="text-red-500">*</span>
             </label>
             <select
               value={industry}
@@ -139,7 +146,7 @@ export default function EditTickerModal({ ticker, isOpen, onClose, onSuccess }: 
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               disabled={isSubmitting}
             >
-              <option value="">Select industry (optional)</option>
+              <option value="">Select industry</option>
               {COMMON_INDUSTRIES.map((ind) => (
                 <option key={ind} value={ind}>
                   {ind}

@@ -96,7 +96,7 @@ export interface TickerWatchlist {
   Ticker: string;
   Ticker_Name?: string;
   Exchange?: string;
-  Industry?: string;
+  Industry: string;
   Active: boolean;
   created_at?: string;
   updated_at?: string;
@@ -114,12 +114,12 @@ export interface CreateTickerData {
   Ticker: string;
   Ticker_Name: string;  // Required - from Alpaca
   Exchange: string;  // Required - from Alpaca
-  Industry?: string;
+  Industry: string;
   Active: boolean;
 }
 
 export interface UpdateTickerData {
   // Ticker and Exchange cannot be updated
-  Industry?: string;
+  Industry: string;
   Active?: boolean;
 }
