@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir -r /app/api/requirements.txt
 # Copy application code
 COPY api /app/api
 COPY shared /app/shared
+COPY trading /app/trading
 COPY .env /app/.env
 
 # Expose port

@@ -19,6 +19,7 @@ services:
     volumes:
       - ./api:/app/api
       - ./shared:/app/shared
+      - ./trading:/app/trading
       - ./.env:/app/.env
     command: uvicorn api.main:app --host 0.0.0.0 --port 8085 --reload
     networks:
