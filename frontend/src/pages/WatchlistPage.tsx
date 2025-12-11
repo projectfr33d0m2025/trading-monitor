@@ -18,7 +18,7 @@ export default function WatchlistPage() {
   const [filterIndustry, setFilterIndustry] = useState<string>('ALL');
   const [filterActive, setFilterActive] = useState<string>('ALL');
   const [filterSearch, setFilterSearch] = useState('');
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
