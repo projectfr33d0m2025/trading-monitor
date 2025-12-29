@@ -23,6 +23,11 @@ const COMMON_INDUSTRIES = [
   'Utilities',
   'Real Estate',
   'Telecommunications',
+  'ETF - US',
+  'ETF - Europe',
+  'ETF - Asia Pacific',
+  'ETF - Emerging Markets',
+  'ETF - Global',
   'Other'
 ];
 
