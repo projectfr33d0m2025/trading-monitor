@@ -114,7 +114,9 @@ class OrderExecutor:
         new_trade = decision_data.get('new_trade', {})
 
         # Extract trade parameters
-        symbol = decision_data.get('symbol') or decision['Ticker']  # Fallback to Ticker column
+        # Use Ticker column as authoritative source (strip exchange suffix like ':NYSE')
+        ticker_raw = decision['Ticker']
+        symbol = ticker_raw.split(':')[0] if ':' in ticker_raw else ticker_raw
         side = new_trade.get('side', 'buy')  # buy or sell
         qty = new_trade.get('qty')
         limit_price = new_trade.get('limit_price')  # entry price

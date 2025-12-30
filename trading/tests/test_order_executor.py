@@ -67,6 +67,44 @@ class TestOrderExecutorNewTrade:
         assert decision['executed'] is True
         assert decision['existing_order_id'] == str(order.id)
 
+    def test_new_trade_uses_ticker_not_json_symbol(self, test_db, mock_alpaca_client):
+        """Test that symbol is extracted from Ticker column, not JSON Decision.symbol"""
+        decision = {
+            "symbol": "WRONG",  # Intentionally wrong JSON symbol
+            "analysis_date": "2025-01-15",
+            "primary_action": "NEW_TRADE",
+            "new_trade": {
+                "strategy": "SWING",
+                "qty": 10,
+                "side": "buy",
+                "type": "limit",
+                "time_in_force": "day",
+                "limit_price": 150.00,
+                "stop_loss": {"stop_price": 145.00}
+            }
+        }
+        decision_json = json.dumps(decision)
+
+        # Ticker column has correct symbol with exchange suffix
+        test_db.execute_query("""
+            INSERT INTO analysis_decision (
+                "Analysis_Id", "Ticker", "Decision", executed, "Approve"
+            ) VALUES (%s, %s, %s::jsonb, %s, %s)
+        """, ('TEST_TICKER', 'AAPL:NYSE', decision_json, False, True))
+
+        executor = OrderExecutor(test_mode=True, db=test_db, alpaca_client=mock_alpaca_client)
+        executor.run()
+
+        # Verify order uses AAPL (from Ticker), not WRONG (from JSON)
+        assert len(mock_alpaca_client.orders) == 1
+        order = list(mock_alpaca_client.orders.values())[0]
+        assert order.symbol == 'AAPL'  # Correct symbol from Ticker column
+
+        # Verify trade_journal has correct symbol
+        trades = test_db.query('trade_journal', 'initial_analysis_id = %s', ('TEST_TICKER',))
+        assert len(trades) == 1
+        assert trades[0]['symbol'] == 'AAPL'
+
     def test_new_trade_sell_order(self, test_db, mock_alpaca_client):
         """Test NEW_TRADE with SELL action"""
         # Insert SELL decision with new structure
